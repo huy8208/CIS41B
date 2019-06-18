@@ -64,3 +64,5 @@ if __name__ == "__main__":
     app = MainWin()
     gui2fg()
     app.mainloop()
+
+print("SOMETHING")
