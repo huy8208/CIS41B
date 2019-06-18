@@ -119,6 +119,4 @@ def commonItemSearch(query: str, baseURL: str, headers: dict) -> dict:
         return itemDict
     else:
         print("API Search for", query + "\'s nutrients has failed:", response.status_code, "Error")
-# GETnearbyRestaurants()
-# print(brandItemSearch("51c36af897c3e69de4b07644",BASE_URL,HEADERS))
-print(commonItemSearch("apple",BASE_URL,HEADERS))
+
