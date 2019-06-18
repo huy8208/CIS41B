@@ -18,11 +18,10 @@ def GETnearbyRestaurants() -> dict:
     myloc = geocoder.ip('me') # Ger current lat and lon
     
     url = "https://trackapi.nutritionix.com/v2/locations?ll=%s,%s&distance=2mi&limit=20" % (myloc.latlng[0],myloc.latlng[1])
-    urlInstant = "https://trackapi.nutritionix.com/v2/search/instant?query=apple"
-    
+
     try:
         # response = requests.get(url, headers=headers, timeout=30)
-        response = requests.get(urlInstant, headers=headers, timeout=30)
+        response = requests.get(url, headers=headers, timeout=30)
         data = json.loads(response.content.decode('utf-8'))
         data = json.dumps(data,indent = 4)
         pythonOb = json.loads(data) # Convert back to python object to get total number of restaurants

@@ -33,7 +33,7 @@ def windowBeautify(window,x,y,width,height):
 
 
 
-class MainWin(tk.Tk):
+class ChoiceFour(tk.Toplevel):
     def __init__(self):
         super().__init__()
         self.title("Foodie")
@@ -52,13 +52,12 @@ class MainWin(tk.Tk):
         self.data = {}
     def insertToListBox(self):
         self.data = GETnearbyRestaurants()
-        brand_id_list = []
         for restaurant in self.data['locations']:
             self.LB.insert(tk.END, restaurant['name'])
 
         # # TEST
-        self.data = json.dumps(self.data,indent = 4)
-        print(self.data)
+        # self.data = json.dumps(self.data,indent = 4)
+        # print(self.data)
 
 if __name__ == "__main__":
     app = MainWin()

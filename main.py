@@ -53,7 +53,7 @@ class MainWin(tk.Tk):
         tk.Button(self, text="Search and display food label", command=self.searchAndDisplay).grid(padx=10, pady=10)
         tk.Button(self, text="Calculate total calorie count for foods", command=self.totalCalories).grid(padx=10, pady=10)
         tk.Button(self, text="Display calorie count graph of food", command=self.totalCalories).grid(padx=10, pady=10)
-        tk.Button(self, text="Show food label of restaurant menu item", command=None).grid(padx=10, pady=10)        # Remove if not possible
+        tk.Button(self, text="Show food label of restaurant menu item", command = lambda : ChoiceFour(self)).grid(padx=10, pady=10)        # Remove if not possible
 
     def searchAndDisplay(self):
         SingleFoodPrompt(self)
@@ -137,6 +137,35 @@ class NutritionLabel(tk.Toplevel):
 
         for k, v in data.items():
             print(k, v)
+
+
+class ChoiceFour(tk.Toplevel):
+    def __init__(self,master):
+        super().__init__(master)
+        self.title("Foodie")
+        # self.resizable(False,False)
+
+        # windowBeautify(self,250,150,480,250)
+        # List box
+        self.scroll = tk.Scrollbar(self)
+        self.LB = tk.Listbox(self, height=10, width=50, selectmode="multiple", yscrollcommand=self.scroll.set)
+        self.LB.grid(padx = 10, pady = 10,row=0,column=0)
+        self.scroll.grid(column=1, sticky="ns")
+        tk.Button(self, text="Find nearby restaurants", command= self.insertToListBox).grid(row=1,column=0)
+        self.scroll.config(command=self.LB.yview)      # Allows scrollbar to work with listbox y-scrolling
+
+        # Json structure
+        self.data = {}
+    def insertToListBox(self):
+        self.data = GETnearbyRestaurants()
+        for restaurant in self.data['locations']:
+            self.LB.insert(tk.END, restaurant['name'])
+
+        # # TEST
+        # self.data = json.dumps(self.data,indent = 4)
+        # print(self.data)
+
+
 
 
 if __name__ == '__main__':
