@@ -65,4 +65,4 @@ if __name__ == "__main__":
     gui2fg()
     app.mainloop()
 
-print('aisjdkla')
+print('SOMETHING')
