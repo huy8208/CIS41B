@@ -52,7 +52,7 @@ class MainWin(tk.Tk):
         self.resizable(False, False)
         tk.Button(self, text="Search and display food label", command=self.searchAndDisplay).grid(padx=10, pady=10)
         tk.Button(self, text="Calculate total calorie count for foods", command=self.totalCalories).grid(padx=10, pady=10)
-        tk.Button(self, text="Display calorie count graph of food", command=self.totalCalories).grid(padx=10, pady=10)
+        tk.Button(self, text="Display calorie count graph of food", command= lambda : ChoiceThree(self)).grid(padx=10, pady=10)
         tk.Button(self, text="Show food label of restaurant menu item", command = lambda : ChoiceFour(self)).grid(padx=10, pady=10)        # Remove if not possible
 
     def searchAndDisplay(self):
@@ -142,10 +142,9 @@ class NutritionLabel(tk.Toplevel):
 class ChoiceFour(tk.Toplevel):
     def __init__(self,master):
         super().__init__(master)
-        self.title("Foodie")
+        self.title("Nearby Restaurants")
         # self.resizable(False,False)
 
-        # windowBeautify(self,250,150,480,250)
         # List box
         self.scroll = tk.Scrollbar(self)
         self.LB = tk.Listbox(self, height=10, width=50, selectmode="multiple", yscrollcommand=self.scroll.set)
@@ -165,7 +164,35 @@ class ChoiceFour(tk.Toplevel):
         # self.data = json.dumps(self.data,indent = 4)
         # print(self.data)
 
+class ChoiceThree(tk.Toplevel):
+    def __init__(self,master):
+        super().__init__(master)
+        self.title("Nutrition Graph")
+        self.resizable = (False, False)
+        self.grab_set()
 
+        textField = tk.StringVar()
+        tk.Label(self, text="Enter an food item to be graphed:").grid(pady=10, sticky="e")
+        E = tk.Entry(self, textvariable=textField)
+        E.grid(row=0, column=1, padx=10, pady=10)
+        tk.Button(self, text="Search", command=lambda: self.search(textField.get())).grid(row=1, column=1)
+        E.bind("<Return>", lambda: self.search(textField.get()))
+
+    def search(self,query):
+        print(query)
+        data = genSearch(query,BASE_URL,HEADERS)
+        print("This is all the branded items: ")
+        rangeY = []
+        for item,nix_item_id in data.items(): # Loop and do work with branded foods only.
+            if nix_item_id == None:
+                continue
+            else:
+                try:
+                    data = brandItemSearch(nix_item_id,BASE_URL,HEADERS)
+                    # rangeY.append(data['calories'])
+                    # print("This is calories: ",data['calories'])
+                except requests.exceptions.RequestException as e:
+                    print("Request exception: ", e)
 
 
 if __name__ == '__main__':
