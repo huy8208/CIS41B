@@ -39,8 +39,8 @@ def GETnearbyRestaurants() -> dict:
 
 
 BASE_URL = "https://trackapi.nutritionix.com/v2"                # URL for Nutritionix API calls
-HEADERS = {'x-app-id': "a6db4eec",                              # Headers for Nutritionix API calls
-    'x-app-key': "dd88c3b6ece495fd91ed7bb18bb133a2",
+HEADERS = {'x-app-id': "d43b95b0",                              # Headers for Nutritionix API calls
+    'x-app-key': "ccc1f54d0392398034fcda2a489c3522",
         "Content-Type": "application/json"}
 
 def genSearch(query: str, baseURL: str, headers: dict) -> dict:
@@ -74,11 +74,9 @@ def genSearchV2(query: str, baseURL: str, headers: dict) -> dict:
     try:
         data = json.loads(response.content.decode('utf-8'))
         results = {}
-
+        return data
         print("total number of branded items: ",len(data["branded"]))
-        for brandItem in data["branded"]:           # Branded items are assigned their nix_brand_id for later searching
-            results[brandItem["food_name"]] = brandItem["nix_item_id"]
-        return results
+
     except requests.exceptions.RequestException as e:
         print ("Request exception: ", e)
 def brandItemSearch(id: str, baseURL: str, headers: dict) -> dict:

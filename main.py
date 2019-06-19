@@ -179,21 +179,32 @@ class ChoiceThree(tk.Toplevel):
         E.bind("<Return>", lambda: self.search(textField.get()))
 
     def search(self,query):
-        print(query)
-        data = genSearch(query,BASE_URL,HEADERS)
-        print("This is all the branded items: ")
-        rangeY = []
-        for item,nix_item_id in data.items(): # Loop and do work with branded foods only.
-            if nix_item_id == None:
-                continue
-            else:
-                try:
-                    data = brandItemSearch(nix_item_id,BASE_URL,HEADERS)
-                    # rangeY.append(data['calories'])
-                    # print("This is calories: ",data['calories'])
-                except requests.exceptions.RequestException as e:
-                    print("Request exception: ", e)
+        # data = genSearchV2(query,BASE_URL,HEADERS) comment out for not to exceed api limits
 
+
+        rangeY = [100, 80, 120, 120, 110, 220, 143.55, 50, 70, 50, 140, 70, 40, 40, 50, 90, 70, 110, 50, 70]
+        rangeX = ['Bite Size Dry Salami, Spicy', 'Cheddar Cheese, Minis', 'Mini Wafers, Vanilla', 'Organic Chicken & Maple Breakfast Sausage', 'Organic Uncured Beef Hot Dog', 'Pork Carnitas, Seasoned & Seared', 'Sparkling Apple Juice', 'Turkey Breast, Oven Roasted', 'Uncured Black Forest Ham', 'Uncured Thick Cut Bacon, Hickory Smoked', 'Oatmeal Bar, Chocolate', 'The Great Uncured Chicken Hot Dog, Organic', 'Organic Apple Snack, No Sugar Added', 'Apple & Strawberry Fruit Snack', 'Apple Strawberry Snack', 'Applesauce with Peaches', 'Applesauce, Unsweetened', 'Chicken & Maple Breakfast Sausage', 'Herb Turkey Breast', 'Hot Dog, Uncured Beef']
+        # for item in data['branded']:
+        #     rangeY.append(round(item["nf_calories"],4))
+        #     rangeX.append(item["food_name"])
+
+        init = CaloriesWindow(self, lambda: self.plotCaloriesGraph(rangeX,rangeY))
+
+    def plotCaloriesGraph(self,rangeX,rangeY):
+        plt.bar(rangeX,rangeY,width=0.5,label='YEAHHH',color= '#7189bf')
+        plt.xlabel("Tuition and fee for the year ")
+        plt.ylabel("Undergraduate Budget")
+        plt.title("Pathway Recommendation")
+        plt.legend(loc="best")
+
+class CaloriesWindow(tk.Toplevel):
+    def __init__(self,master,plotgraph):
+        super().__init__(master)
+        fig = plt.figure(figsize=(10,7))
+        plotgraph()
+        canvas = FigureCanvasTkAgg(fig, master=self)
+        canvas.get_tk_widget().grid()
+        canvas.draw()
 
 if __name__ == '__main__':
     app = MainWin()
