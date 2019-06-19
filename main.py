@@ -15,8 +15,6 @@ lower limit for graphs (choice 3) due to API limits
 @version 1.0
 @date 2019.06.14
 """
-import requests
-import json
 import os   # For gui2fg()
 import sys  # For gui2fg()
 import tkinter as tk
@@ -72,11 +70,11 @@ class SingleFoodPrompt(tk.Toplevel):
         self.resizable = (False, False)
         self.grab_set()
 
-        textField = tk.StringVar()
-        tk.Label(self, text="Enter an food item to be searched:").grid(pady=10, sticky="e")
-        tk.Entry(self, textvariable=textField).grid(row=0, column=1, padx=10, pady=10)
-        tk.Button(self, text="Search", command=lambda: self.search(textField.get())).grid(row=1, column=1)
-        tk.Button(self, text="Print Label", command=self.getSelection).grid(row=3)
+        self.textField = tk.StringVar()
+        tk.Label(self, text="Enter an food item to be searched. Press <Enter> to search:").grid(pady=10, sticky="e")
+        tk.Entry(self, textvariable=self.textField).grid(row=0, column=1, padx=10, pady=10)
+        tk.Button(self, text="Print Label", command=self.getSelection).grid(row=2)
+        self.bind("<Return>", self.search)
 
         self.scroll = tk.Scrollbar(self)
         self.scroll.grid(row=2, column=1, sticky="nsw")                     # Grids scrollbar in 2nd column next to listbox
@@ -86,7 +84,8 @@ class SingleFoodPrompt(tk.Toplevel):
 
         self.results = {}       # To store search results
 
-    def search(self, query):
+    def search(self, event):
+        query = self.textField.get()
         self.LB.delete(0, tk.END)                       # Clears listbox for new search
         self.results = genSearch(query, BASE_URL, HEADERS)
         if len(self.results) == 0:      # If query doesn't return any results

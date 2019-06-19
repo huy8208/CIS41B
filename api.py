@@ -1,3 +1,18 @@
+"""
+CIS 41B (01Y)
+Final Project - api.py
+~ Module storing all functions related to pulling data from the Nutritionix API
+
+TO DO LIST:
+1. Clean up GETnearbyRestaurants
+    1a. Add parameters
+    1b. Clean up exception code
+2. Check if ATTRIBUTES and NEW_ATTRIBUTES work properly
+
+@author Huy Nguyen, Minhduc Cao
+@version 1.2
+@date 2019.06.19
+"""
 import json
 import requests
 import geocoder  # Custom installed Python module to get current latitude and longtitude
