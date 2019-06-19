@@ -6,14 +6,32 @@ Final Project - main.py
 Imported Files:
 - api.py
 
-bind Enter key
+Imported Modules:
+- geocoder (requires command line installation)
+
 add note why there isn't a status check
 lower limit for graphs (choice 3) due to API limits
 
+All Keys:
+>> MDC Key:
+2713eda2
+2f3f23571397305a0df5759ce0da0f2e
+
+>> MDC Key 2: (FOR DEMO)
+d5b800e9
+d95b0fdcdf5ac259b8a7b80b40200519
+
+>> Huy Key:
+a6db4eec
+dd88c3b6ece495fd91ed7bb18bb133a2
+
+>> Huy Key 2:
+d43b95b0
+ccc1f54d0392398034fcda2a489c3522
 
 @author Huy Nguyen, Minhduc Cao
-@version 1.0
-@date 2019.06.14
+@version 1.3
+@date 2019.06.19
 """
 import os   # For gui2fg()
 import sys  # For gui2fg()
@@ -29,9 +47,10 @@ from api import *
 import collections  # remove after finished testing
 
 BASE_URL = "https://trackapi.nutritionix.com/v2"                # URL for Nutritionix API calls
-HEADERS = {'x-app-id': "2713eda2",                              # Headers for Nutritionix API calls
-           'x-app-key': "2f3f23571397305a0df5759ce0da0f2e",
+HEADERS = {"x-app-id": "d43b95b0",                              # Headers for Nutritionix API calls
+           "x-app-key": "ccc1f54d0392398034fcda2a489c3522",
            "Content-Type": "application/json"}
+
 
 def gui2fg():
     """Brings tkinter GUI to foreground on Mac
@@ -45,36 +64,34 @@ def gui2fg():
 
 class MainWin(tk.Tk):
     def __init__(self):
+        """Initializes main window to display all four choices to deal with food"""
         super().__init__()
         self.title("Food Search")
         self.resizable(False, False)
-        tk.Button(self, text="Search and display food label", command=self.searchAndDisplay).grid(padx=10, pady=10)
-        tk.Button(self, text="Calculate total calorie count for foods", command=self.totalCalories).grid(padx=10, pady=10)
-        tk.Button(self, text="Display calorie count graph of food", command= lambda : ChoiceThree(self)).grid(padx=10, pady=10)
-        tk.Button(self, text="Show food label of restaurant menu item", command = lambda : ChoiceFour(self)).grid(padx=10, pady=10)        # Remove if not possible
-
-    def searchAndDisplay(self):
-        SingleFoodPrompt(self)
-
-    def totalCalories(self):
-        pass
-
-    def calorieGraph(self):
-        pass
+        tk.Button(self, text="Search and display food label", command=lambda: ChoiceOne(self)).grid(padx=10, pady=10)
+        tk.Button(self, text="Calculate total calorie count for foods", command=lambda: ChoiceTwo(self)).grid(padx=10, pady=10)
+        tk.Button(self, text="Display calorie count graph of food", command=lambda: ChoiceThree(self)).grid(padx=10, pady=10)
+        tk.Button(self, text="Show food label of restaurant menu item", command=lambda: ChoiceFour(self)).grid(padx=10, pady=10)
 
 
-class SingleFoodPrompt(tk.Toplevel):
+class ChoiceOne(tk.Toplevel):
     def __init__(self, master):
+        """Initializes window to prompt user to search for a food item and print a corresponding food label
+
+        Arguments:
+            master (MainWin class): links to MainWindow window
+        """
         super().__init__(master)
         self.title("Search and display food label")
         self.resizable = (False, False)
         self.grab_set()
 
-        self.textField = tk.StringVar()
+        self.textField = tk.StringVar()     # Stores text field for Entry widget
         tk.Label(self, text="Enter an food item to be searched. Press <Enter> to search:").grid(pady=10, sticky="e")
         tk.Entry(self, textvariable=self.textField).grid(row=0, column=1, padx=10, pady=10)
-        tk.Button(self, text="Print Label", command=self.getSelection).grid(row=2)
-        self.bind("<Return>", self.search)
+        tk.Label(self, text="Once you've searched for an item, select one to print nutritional label for.").grid(row=1, column=0, padx=10, pady=10)
+        tk.Button(self, text="Print Label", command=self.printLabel).grid(row=1, column=1, padx=10, pady=10)
+        self.bind("<Return>", self.search)  # Binds enter key to search
 
         self.scroll = tk.Scrollbar(self)
         self.scroll.grid(row=2, column=1, sticky="nsw")                     # Grids scrollbar in 2nd column next to listbox
@@ -85,16 +102,21 @@ class SingleFoodPrompt(tk.Toplevel):
         self.results = {}       # To store search results
 
     def search(self, event):
-        query = self.textField.get()
+        """Searches user query and inputs results into listbox
+
+        Arguments:
+            event (tkinter.Event): tkinter Event object storing event bind data
+        """
         self.LB.delete(0, tk.END)                       # Clears listbox for new search
-        self.results = genSearch(query, BASE_URL, HEADERS)
+        self.results = genSearch(self.textField.get(), BASE_URL, HEADERS)
         if len(self.results) == 0:      # If query doesn't return any results
             tkmb.showinfo("Search Results", "Your search query has returned 0 results. Please double check for spelling errors or try with a different food item.")
         else:           # Inserts results into listbox -- since API isn't massive, display all results
             for food in self.results:
                 self.LB.insert(tk.END, food)
 
-    def getSelection(self):
+    def printLabel(self):
+        """Checks user selection and calls Nutrition Label class to print nutrition label for food selection"""
         index = self.LB.curselection()
         if index is ():         # If user presses "Print Label" before searching anything
             tkmb.showerror("Error", "Please search for and select one food item before pressing \'Print Label\'.")
@@ -102,15 +124,15 @@ class SingleFoodPrompt(tk.Toplevel):
             foodItem = self.LB.get(self.LB.curselection())
             if self.results[foodItem] is None:  # Checks if food item is a common item
                 foodData = commonItemSearch(foodItem.replace("(Common)", ""), BASE_URL, HEADERS)
-            else:       # Runs if food item is a branded food item
+            else:                               # Runs if food item is a branded food item
                 foodData = brandItemSearch(self.results[foodItem], BASE_URL, HEADERS)
             print(foodData)
             NutritionLabel(self, foodData)      # Creates nutrition label window
 
 
 class NutritionLabel(tk.Toplevel):
-    DAILY_VALUES = {"total_fat": 65, "sat_fat": 20, "cholesterol": 300}
-
+    # FDA daily value nutrient amounts for a 2000 calorie diet
+    DAILY_VALUES = {"calories": 2000, "total_fat": 65, "sat_fat": 20, "cholesterol": 300, "sodium": 2400, "total_carbs": 300, "fiber": 25, "protein": 50}
 
     def __init__(self, master, data):
         super().__init__(master)
@@ -133,38 +155,13 @@ class NutritionLabel(tk.Toplevel):
         tk.Label(self, text="")
 
 
-
-        for k, v in data.items():
-            print(k, v)
-
-
-class ChoiceFour(tk.Toplevel):
-    def __init__(self,master):
+class ChoiceTwo(tk.Toplevel):
+    def __init__(self, master):
         super().__init__(master)
-        self.title("Nearby Restaurants")
-        # self.resizable(False,False)
 
-        # List box
-        self.scroll = tk.Scrollbar(self)
-        self.LB = tk.Listbox(self, height=10, width=50, selectmode="multiple", yscrollcommand=self.scroll.set)
-        self.LB.grid(padx = 10, pady = 10,row=0,column=0)
-        self.scroll.grid(column=1, sticky="ns")
-        tk.Button(self, text="Find nearby restaurants", command= self.insertToListBox).grid(row=1,column=0)
-        self.scroll.config(command=self.LB.yview)      # Allows scrollbar to work with listbox y-scrolling
-
-        # Json structure
-        self.data = {}
-    def insertToListBox(self):
-        self.data = GETnearbyRestaurants()
-        for restaurant in self.data['locations']:
-            self.LB.insert(tk.END, restaurant['name'])
-
-        # # TEST
-        # self.data = json.dumps(self.data,indent = 4)
-        # print(self.data)
 
 class ChoiceThree(tk.Toplevel):
-    def __init__(self,master):
+    def __init__(self, master):
         super().__init__(master)
         self.title("Nutrition Graph")
         self.resizable = (False, False)
@@ -189,21 +186,50 @@ class ChoiceThree(tk.Toplevel):
 
         init = CaloriesWindow(self, lambda: self.plotCaloriesGraph(rangeX,rangeY))
 
-    def plotCaloriesGraph(self,rangeX,rangeY):
+    def plotCaloriesGraph(self, rangeX, rangeY):
         plt.bar(rangeX,rangeY,width=0.5,label='YEAHHH',color= '#7189bf')
         plt.xlabel("Tuition and fee for the year ")
         plt.ylabel("Undergraduate Budget")
         plt.title("Pathway Recommendation")
         plt.legend(loc="best")
 
+
 class CaloriesWindow(tk.Toplevel):
-    def __init__(self,master,plotgraph):
+    def __init__(self,master, plotgraph):
         super().__init__(master)
         fig = plt.figure(figsize=(10,7))
         plotgraph()
         canvas = FigureCanvasTkAgg(fig, master=self)
         canvas.get_tk_widget().grid()
         canvas.draw()
+
+
+class ChoiceFour(tk.Toplevel):
+    def __init__(self, master):
+        super().__init__(master)
+        self.title("Nearby Restaurants")
+        # self.resizable(False,False)
+
+        # List box
+        self.scroll = tk.Scrollbar(self)
+        self.LB = tk.Listbox(self, height=10, width=50, selectmode="multiple", yscrollcommand=self.scroll.set)
+        self.LB.grid(padx = 10, pady = 10,row=0,column=0)
+        self.scroll.grid(column=1, sticky="ns")
+        tk.Button(self, text="Find nearby restaurants", command= self.insertToListBox).grid(row=1,column=0)
+        self.scroll.config(command=self.LB.yview)      # Allows scrollbar to work with listbox y-scrolling
+
+        # Json structure
+        self.data = {}
+
+    def insertToListBox(self):
+        self.data = getNearbyRestaurants(BASE_URL, HEADERS)
+        for restaurant in self.data['locations']:
+            self.LB.insert(tk.END, restaurant['name'])
+
+        # # TEST
+        # self.data = json.dumps(self.data,indent = 4)
+        # print(self.data)
+
 
 if __name__ == '__main__':
     app = MainWin()
