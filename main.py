@@ -306,12 +306,12 @@ class ChoiceThree(tk.Toplevel):
 
     def plotCaloriesGraph(self, rangeX, rangeY):
         plt.bar(rangeX,rangeY,width=0.5,label='YEAHHH',color= '#7189bf')
-        plt.xlabel("Tuition and fee for the year ")
-        plt.ylabel("Undergraduate Budget")
-        plt.title("Pathway Recommendation")
+        plt.xlabel("Food brands")
+        plt.ylabel("Amount of calories")
+        plt.title("Calories Graph")
         plt.legend(loc="best")
 
-        plt.yticks(y_pos, y,fontsize=8, wrap=True, verticalalignment='center')
+        # plt.yticks(y_pos, y,fontsize=8, wrap=True, verticalalignment='center')
 
 
 class CaloriesWindow(tk.Toplevel):
@@ -354,15 +354,16 @@ class ChoiceFour(tk.Toplevel):
     def checkValid(self):
         if len(self.LB.curselection()) <= 0:
             tkmb.showerror("Error", "Please click find my restaurants button first !")
-        elif len(self.LB.curselection()) >= 3:
+        elif len(self.LB.curselection()) > 3:
             tkmb.showerror("Error", "Please choose less than 3 restaurants")
         else:
-            restaurants = [self.LB.get(restarant) for restaurant in self.LB.curselection()]
-            print(restaurant)
+            restaurants = [self.LB.get(restaurant) for restaurant in self.LB.curselection()]
+            print(restaurants)
 
+            init = ShowRestaurantsInfo(self,)
 
 class ShowRestaurantsInfo(tk.Toplevel):
-    def __init__(self,master):
+    def __init__(self,master,restaurants):
         super().__init__(master)
         self.title("Restaurant(s) Information")
         self.font = tkf.Font(size=30, weight="bold")
