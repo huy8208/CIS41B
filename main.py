@@ -14,9 +14,14 @@ lower limit for graphs (choice 3) due to API limits
 
 TO DO LIST:
 1. Choice 2
-    2a. Do everything
+    1a. Test with genSearch()
+    1b. Check to see if calculations are correct
+    1c. Add status?
+    1d. Add threading per query
+    1e.
 2. Choice 3
 3. Choice 4
+4. NEED TO TRY INSTALLING GEOCODER ON DE ANZA COMPUTERS
 
 All Keys:
 >> MDC Key:
@@ -191,6 +196,69 @@ class NutritionLabel(tk.Toplevel):
 class ChoiceTwo(tk.Toplevel):
     def __init__(self, master):
         super().__init__(master)
+        self.title("Search and display food label")
+        self.resizable = (False, False)
+        self.grab_set()
+
+        self.fieldOne = tk.StringVar()
+        self.fieldTwo = tk.StringVar()
+        self.fieldThree = tk.StringVar()
+        self.fieldFour = tk.StringVar()
+        self.fields = [self.fieldOne, self.fieldTwo, self.fieldThree, self.fieldFour]
+
+        tk.Label(self, text="Enter up to 4 food items to calculate total calories.\nPress \'Search Items\' when ready.\n\nWhen food items have shown up, "
+                            "select up to 10 items\nthat you want to find the total calories for.\nPress \'Calculate\' when ready.").grid(padx=10, sticky="w")
+        tk.Entry(self, textvariable=self.fieldOne).grid(row=1, padx=25, sticky="we")
+        tk.Entry(self, textvariable=self.fieldTwo).grid(row=2, padx=25, sticky="we")
+        tk.Entry(self, textvariable=self.fieldThree).grid(row=3, padx=25, sticky="we")
+        tk.Entry(self, textvariable=self.fieldFour).grid(row=4, padx=25, sticky="we")
+        tk.Button(self, text="Search Items", command=self.search).grid(row=5, padx=10)
+        tk.Button(self, text="Calculate", command=self.calculate).grid(row=5, column=1, padx=10)
+
+        self.scroll = tk.Scrollbar(self)
+        self.scroll.grid(row=0, column=2, sticky="nsw", rowspan=5)             # Grids scrollbar in 2nd column next to listbox
+        self.LB = tk.Listbox(self, height=15, width=50, selectmode="multiple", yscrollcommand=self.scroll.set)
+        self.LB.grid(row=0, column=1, padx=5, pady=10, rowspan=5)
+        self.scroll.config(command=self.LB.yview)                   # Allows scrollbar to work with listbox y-scrolling
+
+        self.results = {}                                           # Stores search results from queries
+        self.LB.bind("<<ListboxSelect>>", self.listboxLimit)        # Binds any listbox selection to callback function
+
+    def listboxLimit(self, event):
+        """Clears user selection if user selects more than 10 food items to calculate total calories"""
+        if len(self.LB.curselection()) > 10:
+            for i in range(len(self.results)):
+                self.LB.selection_clear(i)
+
+    def search(self):
+        queries = []
+        for field in self.fields:
+            query = field.get()
+            if query.strip() != "":     # Adds non-empty fields as queries
+                queries.append(query)
+        if len(queries) == 0:
+            tkmb.showerror("Error", "Please enter at least 1 search term in any of the four search fields.")
+        else:
+            self.LB.delete(0, tk.END)               # Clears listbox for new data
+            self.results = {}
+            """   REMOVE TRIPLE QUOTES AFTER DONE TESTING
+            for query in queries:
+                response = genSearch(query, BASE_URL, HEADERS)
+                if len(response) > 20:              # Limits to top 20 of each search query for easier browsing
+                    response = {k: response[k] for k in response.keys()[:15]}
+                data = {**data, **response}         # Merges dictionaries together
+            """
+
+            # Finish all data gathering, insert into listbox
+            self.results = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 11}       # REMOVE AFTER DONE TESTING
+            for food in self.results:
+                self.LB.insert(tk.END, food)
+
+    def calculate(self):
+        indexes = self.LB.curselection()
+        print(indexes)
+        if indexes is ():                         # If user presses "Print Label" before searching anything
+            tkmb.showerror("Error", "Please search for and select at least one food item before pressing \'Calculate\'.")
 
 
 class ChoiceThree(tk.Toplevel):
