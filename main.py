@@ -85,7 +85,7 @@ class MainWin(tk.Tk):
         tk.Button(self, text="Search and display food label", command=lambda: ChoiceOne(self)).grid(padx=10, pady=10)
         tk.Button(self, text="Calculate total calorie count for foods", command=lambda: ChoiceTwo(self)).grid(padx=10, pady=10)
         tk.Button(self, text="Display calorie count graph of food", command=lambda: ChoiceThree(self)).grid(padx=10, pady=10)
-        tk.Button(self, text="Show food label of restaurant menu item", command=lambda: ChoiceFour(self)).grid(padx=10, pady=10)
+        tk.Button(self, text="Show nearby restaurants", command=lambda: ChoiceFour(self)).grid(padx=10, pady=10)
 
         self.protocol("WM_DELETE_WINDOW", self.closeWin)
     def closeWin(self):
@@ -202,11 +202,17 @@ class NutritionLabel(tk.Toplevel):
 
 class ChoiceTwo(tk.Toplevel):
     def __init__(self, master):
+        """Initializes window to prompt user to search for multiple food items and calculate total calories of selected foods
+
+        Arguments:
+            master (MainWin class): links to MainWindow window
+        """
         super().__init__(master)
         self.title("Search and display food label")
         self.resizable = (False, False)
         self.grab_set()
 
+        # Create tk variables to store entry field ata
         self.fieldOne = tk.StringVar()
         self.fieldTwo = tk.StringVar()
         self.fieldThree = tk.StringVar()
@@ -278,8 +284,6 @@ class ChoiceTwo(tk.Toplevel):
 
     def searchAPI(self, query):
         response = genSearch(query, BASE_URL, HEADERS)
-        #if len(response) > 20:                      # Limits number of responses in listbox to top 20 for ease of scrolling
-        #    response = {k: response[k] for k in list(response.keys())[:20]}
         self.queue.put(response)
 
     def calculate(self):
@@ -288,8 +292,10 @@ class ChoiceTwo(tk.Toplevel):
         if indexes is ():                           # If user presses "Print Label" before searching anything
             tkmb.showerror("Error", "Please search for and select at least one food item before pressing \'Calculate\'.")
         else:
-            foodItems = self.LB.get(self.LB.curselection())
-            print(foodItems)
+            foodItems = {}
+            for index in indexes:
+                foodName = self.LB.get(index)
+                foodItems[foodName] = self.results[foodName]
             total = 0
             for item, id in foodItems.items():
                 if id is None:
@@ -311,15 +317,22 @@ class ChoiceThree(tk.Toplevel):
         tk.Label(self, text="Enter an food item to be graphed:").grid(pady=10, sticky="e")
         E = tk.Entry(self, textvariable=self.UserText)
         E.grid(row=0, column=1, padx=10, pady=10)
-        tk.Button(self, text="Search", command= lambda : self.search(self.UserText)).grid(row=1, column=1)
-        E.bind("<Return>",self.search)
+        tk.Button(self, text="Search Branded Food Items", command=self.search).grid(row=1, column=1)
+        E.bind("<Return>", self.search)
 
-    def search(self,event):
-        # data = genSearchV2(query,BASE_URL,HEADERS) comment out for not to exceed api limits
-        print("This is from self.UserText.get() ",self.UserText.get())
+    def search(self):
+        print("This is from self.UserText.get() ", self.UserText.get())
+        data = genSearch(self.UserText.get())
+        rangeY = []
+
+        for food, id in data.items():
+            if id is not None:
+                foodData = brandItemSearch(id, BASE_URL, HEADERS)
+                rangeY.append(round())
 
         rangeY = [100, 80, 120, 120, 110, 220, 143.55, 50, 70, 50, 140, 70, 40, 40, 50, 90, 70, 110, 50, 70]
         rangeX = ['Bite Size Dry Salami, Spicy', 'Cheddar Cheese, Minis', 'Mini Wafers, Vanilla', 'Organic Chicken & Maple Breakfast Sausage', 'Organic Uncured Beef Hot Dog', 'Pork Carnitas, Seasoned & Seared', 'Sparkling Apple Juice', 'Turkey Breast, Oven Roasted', 'Uncured Black Forest Ham', 'Uncured Thick Cut Bacon, Hickory Smoked', 'Oatmeal Bar, Chocolate', 'The Great Uncured Chicken Hot Dog, Organic', 'Organic Apple Snack, No Sugar Added', 'Apple & Strawberry Fruit Snack', 'Apple Strawberry Snack', 'Applesauce with Peaches', 'Applesauce, Unsweetened', 'Chicken & Maple Breakfast Sausage', 'Herb Turkey Breast', 'Hot Dog, Uncured Beef']
+
         # for item in data['branded']:
         #     rangeY.append(round(item["nf_calories"],4))
         #     rangeX.append(item["food_name"])
