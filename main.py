@@ -54,6 +54,7 @@ matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 from api import *
+import numpy as np
 
 import collections  # remove after finished testing
 
@@ -84,6 +85,10 @@ class MainWin(tk.Tk):
         tk.Button(self, text="Display calorie count graph of food", command=lambda: ChoiceThree(self)).grid(padx=10, pady=10)
         tk.Button(self, text="Show food label of restaurant menu item", command=lambda: ChoiceFour(self)).grid(padx=10, pady=10)
 
+        self.protocol("WM_DELETE_WINDOW", self.closeWin)
+    def closeWin(self):
+        plt.close('all')
+        self.destroy()
 
 class ChoiceOne(tk.Toplevel):
     def __init__(self, master):
@@ -268,22 +273,34 @@ class ChoiceThree(tk.Toplevel):
         self.resizable = (False, False)
         self.grab_set()
 
-        textField = tk.StringVar()
+        self.UserText = tk.StringVar()
         tk.Label(self, text="Enter an food item to be graphed:").grid(pady=10, sticky="e")
-        E = tk.Entry(self, textvariable=textField)
+        E = tk.Entry(self, textvariable=self.UserText)
         E.grid(row=0, column=1, padx=10, pady=10)
-        tk.Button(self, text="Search", command=lambda: self.search(textField.get())).grid(row=1, column=1)
-        E.bind("<Return>", lambda: self.search(textField.get()))
+        tk.Button(self, text="Search", command= lambda : self.search(self.UserText)).grid(row=1, column=1)
+        E.bind("<Return>",self.search)
 
-    def search(self,query):
+    def search(self,event):
         # data = genSearchV2(query,BASE_URL,HEADERS) comment out for not to exceed api limits
-
+        print("This is from self.UserText.get() ",self.UserText.get())
 
         rangeY = [100, 80, 120, 120, 110, 220, 143.55, 50, 70, 50, 140, 70, 40, 40, 50, 90, 70, 110, 50, 70]
         rangeX = ['Bite Size Dry Salami, Spicy', 'Cheddar Cheese, Minis', 'Mini Wafers, Vanilla', 'Organic Chicken & Maple Breakfast Sausage', 'Organic Uncured Beef Hot Dog', 'Pork Carnitas, Seasoned & Seared', 'Sparkling Apple Juice', 'Turkey Breast, Oven Roasted', 'Uncured Black Forest Ham', 'Uncured Thick Cut Bacon, Hickory Smoked', 'Oatmeal Bar, Chocolate', 'The Great Uncured Chicken Hot Dog, Organic', 'Organic Apple Snack, No Sugar Added', 'Apple & Strawberry Fruit Snack', 'Apple Strawberry Snack', 'Applesauce with Peaches', 'Applesauce, Unsweetened', 'Chicken & Maple Breakfast Sausage', 'Herb Turkey Breast', 'Hot Dog, Uncured Beef']
         # for item in data['branded']:
         #     rangeY.append(round(item["nf_calories"],4))
         #     rangeX.append(item["food_name"])
+
+
+
+        maxElement = max(rangeY)
+        minElement = min(rangeY)
+        maxElementPosition = [i for i, x in enumerate(rangeY) if x == maxElement]
+        minElementPosition = [i for i, x in enumerate(rangeY) if x == minElement]
+        print("max : ",maxElement,"position :",maxElementPosition)
+        print("min : ",minElement,"position :",minElementPosition)
+
+        rangeX = np.asarray(rangeX)
+        rangeY = np.asarray(rangeY)
 
         init = CaloriesWindow(self, lambda: self.plotCaloriesGraph(rangeX,rangeY))
 
@@ -293,6 +310,8 @@ class ChoiceThree(tk.Toplevel):
         plt.ylabel("Undergraduate Budget")
         plt.title("Pathway Recommendation")
         plt.legend(loc="best")
+
+        plt.yticks(y_pos, y,fontsize=8, wrap=True, verticalalignment='center')
 
 
 class CaloriesWindow(tk.Toplevel):
@@ -318,6 +337,7 @@ class ChoiceFour(tk.Toplevel):
         self.scroll.grid(column=1, sticky="ns")
         tk.Button(self, text="Find nearby restaurants", command= self.insertToListBox).grid(row=1,column=0)
         self.scroll.config(command=self.LB.yview)      # Allows scrollbar to work with listbox y-scrolling
+        tk.Button(self, text="View restaurant(s) detail",command = self.checkValid).grid(row=2,column=0,sticky='w')
 
         # Json structure
         self.data = {}
@@ -325,12 +345,35 @@ class ChoiceFour(tk.Toplevel):
     def insertToListBox(self):
         self.data = getNearbyRestaurants(BASE_URL, HEADERS)
         for restaurant in self.data['locations']:
-            self.LB.insert(tk.END, restaurant['name'])
+            self.LB.insert(tk.END,restaurant['name'])
 
-        # # TEST
-        # self.data = json.dumps(self.data,indent = 4)
-        # print(self.data)
+        # COMMENT OUT WHEN DONE TESTING
+        test = json.dumps(self.data,indent = 4)
+        print(test)
 
+    def checkValid(self):
+        if len(self.LB.curselection()) <= 0:
+            tkmb.showerror("Error", "Please click find my restaurants button first !")
+        elif len(self.LB.curselection()) >= 3:
+            tkmb.showerror("Error", "Please choose less than 3 restaurants")
+        else:
+            restaurants = [self.LB.get(restarant) for restaurant in self.LB.curselection()]
+            print(restaurant)
+
+
+class ShowRestaurantsInfo(tk.Toplevel):
+    def __init__(self,master):
+        super().__init__(master)
+        self.title("Restaurant(s) Information")
+        self.font = tkf.Font(size=30, weight="bold")
+        tk.Label(self, text="Nutrition Facts", font=self.font).grid(row=0, columnspan=2, sticky="nw")
+        tk.Label(self, text=data["food_name"]).grid(row=1, columnspan=2, sticky="nw")
+        tk.Label(self, text="Serving Size " + str(data["serving_qty"]) + " " + data["serving_unit"], font=self.bigBold).grid(row=2, columnspan=2, sticky="w")
+        tk.Label(self, background="black").grid(row=3, columnspan=2, sticky="we")
+
+
+        self.resizable = (False, False)
+        self.grab_set()
 
 if __name__ == '__main__':
     app = MainWin()
