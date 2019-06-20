@@ -12,6 +12,12 @@ Imported Modules:
 add note why there isn't a status check
 lower limit for graphs (choice 3) due to API limits
 
+TO DO LIST:
+1. Choice 2
+    2a. Do everything
+2. Choice 3
+3. Choice 4
+
 All Keys:
 >> MDC Key:
 2713eda2
@@ -37,7 +43,7 @@ import os   # For gui2fg()
 import sys  # For gui2fg()
 import tkinter as tk
 import tkinter.messagebox as tkmb
-import tkinter.font as tkFont
+import tkinter.font as tkf
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -64,7 +70,7 @@ def gui2fg():
 
 class MainWin(tk.Tk):
     def __init__(self):
-        """Initializes main window to display all four choices to deal with food"""
+        """Initializes main window to display all four choices to deal with using Nutritionix API"""
         super().__init__()
         self.title("Food Search")
         self.resizable(False, False)
@@ -86,20 +92,20 @@ class ChoiceOne(tk.Toplevel):
         self.resizable = (False, False)
         self.grab_set()
 
-        self.textField = tk.StringVar()     # Stores text field for Entry widget
+        self.textField = tk.StringVar()                             # Stores text field for Entry widget
         tk.Label(self, text="Enter an food item to be searched. Press <Enter> to search:").grid(pady=10, sticky="e")
         tk.Entry(self, textvariable=self.textField).grid(row=0, column=1, padx=10, pady=10)
         tk.Label(self, text="Once you've searched for an item, select one to print nutritional label for.").grid(row=1, column=0, padx=10, pady=10)
         tk.Button(self, text="Print Label", command=self.printLabel).grid(row=1, column=1, padx=10, pady=10)
-        self.bind("<Return>", self.search)  # Binds enter key to search
+        self.bind("<Return>", self.search)                          # Binds enter key to search
 
         self.scroll = tk.Scrollbar(self)
-        self.scroll.grid(row=2, column=1, sticky="nsw")                     # Grids scrollbar in 2nd column next to listbox
+        self.scroll.grid(row=2, column=1, sticky="nsw")             # Grids scrollbar in 2nd column next to listbox
         self.LB = tk.Listbox(self, height=15, width=50, selectmode="single", yscrollcommand=self.scroll.set)
         self.LB.grid(row=2, padx=5, pady=10)
         self.scroll.config(command=self.LB.yview)                   # Allows scrollbar to work with listbox y-scrolling
 
-        self.results = {}       # To store search results
+        self.results = {}                                           # To store search results
 
     def search(self, event):
         """Searches user query and inputs results into listbox
@@ -107,18 +113,18 @@ class ChoiceOne(tk.Toplevel):
         Arguments:
             event (tkinter.Event): tkinter Event object storing event bind data
         """
-        self.LB.delete(0, tk.END)                       # Clears listbox for new search
+        self.LB.delete(0, tk.END)               # Clears listbox for new search
         self.results = genSearch(self.textField.get(), BASE_URL, HEADERS)
-        if len(self.results) == 0:      # If query doesn't return any results
+        if len(self.results) == 0:              # If query doesn't return any results
             tkmb.showinfo("Search Results", "Your search query has returned 0 results. Please double check for spelling errors or try with a different food item.")
-        else:           # Inserts results into listbox -- since API isn't massive, display all results
+        else:                                   # Inserts results into listbox -- since API isn't massive, display all results
             for food in self.results:
                 self.LB.insert(tk.END, food)
 
     def printLabel(self):
         """Checks user selection and calls Nutrition Label class to print nutrition label for food selection"""
         index = self.LB.curselection()
-        if index is ():         # If user presses "Print Label" before searching anything
+        if index is ():                         # If user presses "Print Label" before searching anything
             tkmb.showerror("Error", "Please search for and select one food item before pressing \'Print Label\'.")
         else:
             foodItem = self.LB.get(self.LB.curselection())
@@ -132,27 +138,53 @@ class ChoiceOne(tk.Toplevel):
 
 class NutritionLabel(tk.Toplevel):
     # FDA daily value nutrient amounts for a 2000 calorie diet
-    DAILY_VALUES = {"calories": 2000, "total_fat": 65, "sat_fat": 20, "cholesterol": 300, "sodium": 2400, "total_carbs": 300, "fiber": 25, "protein": 50}
+    DAILY_NUTRIENTS = ["total_fat", "sat_fat", "cholesterol", "sodium", "total_carbs", "fiber", "sugar", "protein"]
+    DAILY_VALUES = [65, 20, 300, 2400, 300, 25, None, 50]
 
     def __init__(self, master, data):
+        """Initializes nutrition label window to display food data
+
+        Arguments:
+            master (MainWin class): links to MainWindow window
+            data (dictionary): nutritional information for a specified food item
+        """
         super().__init__(master)
         self.title("Nutritional Facts")
         self.resizable = (False, False)
 
-        self.fontTitle = tkFont.Font(family="Arial", size=30, weight="bold")
-        self.fontSubTitle = tkFont.Font(family="Arial", size=12, weight="bold")
+        # Sets up fonts for formatting
+        self.titleFont = tkf.Font(size=30, weight="bold")
+        self.bigBold = tkf.Font(size=15, weight="bold")
+        self.bold = tkf.Font(weight="bold")
+        self.tinyBold = tkf.Font(size=10, weight="bold")
 
-        tk.Label(self, text=data["food_name"]).grid(padx=10, pady=10, columnspan=2)
-        tk.Label(self, text="Nutrition Facts", font=self.fontTitle).grid(padx=10, sticky="w", columnspan=2)
-        tk.Label(self, text="Serving Size " + str(int(data["serving_qty"])) + " " + data["serving_unit"], font=self.fontSubTitle).grid(padx=10, sticky="w", columnspan=2)
-        tk.Label(self, background="black").grid(sticky="we", columnspan=2)
+        tk.Label(self, text="Nutrition Facts", font=self.titleFont).grid(row=0, columnspan=2, sticky="nw")
+        tk.Label(self, text=data["food_name"]).grid(row=1, columnspan=2, sticky="nw")
+        tk.Label(self, text="Serving Size " + str(data["serving_qty"]) + " " + data["serving_unit"], font=self.bigBold).grid(row=2, columnspan=2, sticky="w")
+        tk.Label(self, background="black").grid(row=3, columnspan=2, sticky="we")
 
-        tk.Label(self, text="Amount per Serving", font=tkFont.Font(weight="bold")).grid(padx=10, sticky="w")
-        tk.Label(self, background="black").grid(sticky="we", columnspan=2)
-        tk.Label(self, text="Calories " + str(data["calories"])).grid(sticky="w", columnspan=2)
-        tk.Label(self, text="% Daily Values").grid(sticky="e", column=1)
-        tk.Label(self, text="Total Fat " + str(data["total_fat"])).grid(sticky="w", column=0) # row 8
-        tk.Label(self, text="")
+        tk.Label(self, text="Amount Per Serving      ", font=self.tinyBold).grid(row=4, columnspan=2, sticky="w")
+        tk.Label(self, background="black").grid(row=5, columnspan=2, sticky="we")
+
+        tk.Label(self, text="Calories " + str(data["calories"]), font=self.bigBold).grid(row=6, column=0, sticky="w")
+        tk.Label(self, text="% Daily Value", font=self.bigBold).grid(row=6, column=1, sticky="e")
+
+        # Creating nutritional facts lines with percentages and correct data assignment
+        nutrientLabels = ["Total Fat", "Saturated Fat", "Cholesterol", "Sodium", "Total Carbohydrate", "Dietary Fiber", "Sugars", "Protein"]
+        units = ["g", "g", "mg", "mg", "g", "g", "g", "g"]
+        foodVals = [data[key] for key in self.DAILY_NUTRIENTS]          # List of nutrient values for the specified food
+
+        for i in range(len(nutrientLabels)):
+            label = tk.Label(self, text=nutrientLabels[i] + " " + str(foodVals[i]) + units[i])
+            if nutrientLabels[i] == "Saturated Fat" or nutrientLabels[i] == "Dietary Fiber" or nutrientLabels[i] == "Sugars":
+                label.grid(row=7+i, column=0, sticky="w", padx=20)      # Indents these lines as sub-labels for 'Total Fat' and "Total Carbohydrates'
+            else:
+                label.grid(row=7+i, column=0, sticky="w")
+                label.config(font=self.bold)
+
+            if nutrientLabels[i] != "Sugars":      # Skips sugar since it doesn't have a recommended daily value
+                tk.Label(self, text=str(round((foodVals[i] / self.DAILY_VALUES[i]) * 100)) + "%", font=self.bold).grid(row=7+i, column=1, sticky="e")
+        tk.Label(self, background="black").grid(columnspan=2, sticky="we")
 
 
 class ChoiceTwo(tk.Toplevel):
