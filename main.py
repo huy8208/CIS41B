@@ -53,6 +53,8 @@ import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
+import threading
+import queue
 from api import *
 
 import collections  # remove after finished testing
@@ -221,14 +223,24 @@ class ChoiceTwo(tk.Toplevel):
         self.LB.grid(row=0, column=1, padx=5, pady=10, rowspan=5)
         self.scroll.config(command=self.LB.yview)                   # Allows scrollbar to work with listbox y-scrolling
 
+        self.statusVar = tk.StringVar()
+        self.statusVar.set("")
+        self.status = tk.Label(self, textvariable=self.statusVar).grid(padx=10, pady=5)
+
+        self.calorieVar = tk.StringVar()
+        self.calorieVar.set("")
+        self.calories = tk.Label(self, textvariable=self.calorieVar).grid(row=6, column=1, padx=10, pady=5)
+
         self.results = {}                                           # Stores search results from queries
         self.LB.bind("<<ListboxSelect>>", self.listboxLimit)        # Binds any listbox selection to callback function
+        self.queue = queue.Queue()
 
     def listboxLimit(self, event):
         """Clears user selection if user selects more than 10 food items to calculate total calories"""
         if len(self.LB.curselection()) > 10:
             for i in range(len(self.results)):
                 self.LB.selection_clear(i)
+            tkmb.showwarning("Warning", "You have selected more than 10 items to be searched. Please choose 10 or less food items.")
 
     def search(self):
         queries = []
@@ -239,26 +251,48 @@ class ChoiceTwo(tk.Toplevel):
         if len(queries) == 0:
             tkmb.showerror("Error", "Please enter at least 1 search term in any of the four search fields.")
         else:
+            self.statusVar.set("Searching for " + str(len(queries)) + " food(s)")
+            self.update()
             self.LB.delete(0, tk.END)               # Clears listbox for new data
-            self.results = {}
-            """   REMOVE TRIPLE QUOTES AFTER DONE TESTING
-            for query in queries:
-                response = genSearch(query, BASE_URL, HEADERS)
-                if len(response) > 20:              # Limits to top 20 of each search query for easier browsing
-                    response = {k: response[k] for k in response.keys()[:15]}
-                data = {**data, **response}         # Merges dictionaries together
-            """
+            self.results = {}                       # Clears results for new data
 
-            # Finish all data gathering, insert into listbox
-            self.results = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9, 10: 10, 11: 11}       # REMOVE AFTER DONE TESTING
+            tList = []
+            for query in queries:
+                tList.append(threading.Thread(target=self.searchAPI, args=(query, )))
+            for t in tList:
+                t.start()
+            n = 0
+            for t in tList:
+                data = self.queue.get()
+                n += 1
+                self.statusVar.set("Finished " + str(n) + "/" + str(len(tList)) + " searches.")
+                self.update()
+                self.results = {**self.results, **data}
             for food in self.results:
                 self.LB.insert(tk.END, food)
+
+    def searchAPI(self, query):
+        response = genSearch(query, BASE_URL, HEADERS)
+        #if len(response) > 20:                      # Limits number of responses in listbox to top 20 for ease of scrolling
+        #    response = {k: response[k] for k in list(response.keys())[:20]}
+        self.queue.put(response)
 
     def calculate(self):
         indexes = self.LB.curselection()
         print(indexes)
-        if indexes is ():                         # If user presses "Print Label" before searching anything
+        if indexes is ():                           # If user presses "Print Label" before searching anything
             tkmb.showerror("Error", "Please search for and select at least one food item before pressing \'Calculate\'.")
+        else:
+            foodItems = self.LB.get(self.LB.curselection())
+            print(foodItems)
+            total = 0
+            for item, id in foodItems.items():
+                if id is None:
+                    total += commonItemSearch(item.replace("(Common)", ""), BASE_URL, HEADERS)["calories"]
+                else:
+                    total += brandItemSearch(id, BASE_URL, HEADERS)["calories"]
+            self.calorieVar.set("Total Calories for " + str(len(indexes)) + " selected food(s): " + str(total))
+            self.update()
 
 
 class ChoiceThree(tk.Toplevel):
