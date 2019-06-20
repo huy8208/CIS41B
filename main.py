@@ -132,7 +132,6 @@ class ChoiceOne(tk.Toplevel):
                 foodData = commonItemSearch(foodItem.replace("(Common)", ""), BASE_URL, HEADERS)
             else:                               # Runs if food item is a branded food item
                 foodData = brandItemSearch(self.results[foodItem], BASE_URL, HEADERS)
-            print(foodData)
             NutritionLabel(self, foodData)      # Creates nutrition label window
 
 
@@ -148,6 +147,7 @@ class NutritionLabel(tk.Toplevel):
             master (MainWin class): links to MainWindow window
             data (dictionary): nutritional information for a specified food item
         """
+        print(data)
         super().__init__(master)
         self.title("Nutritional Facts")
         self.resizable = (False, False)
@@ -172,10 +172,11 @@ class NutritionLabel(tk.Toplevel):
         # Creating nutritional facts lines with percentages and correct data assignment
         nutrientLabels = ["Total Fat", "Saturated Fat", "Cholesterol", "Sodium", "Total Carbohydrate", "Dietary Fiber", "Sugars", "Protein"]
         units = ["g", "g", "mg", "mg", "g", "g", "g", "g"]
-        foodVals = [data[key] for key in self.DAILY_NUTRIENTS]          # List of nutrient values for the specified food
+        vals = [data[key] for key in self.DAILY_NUTRIENTS]          # List of nutrient values for the specified food
+        foodVals = [0 if val is None else val for val in vals]      # Changes 'None' to 0 in nutrient values for the specified food
 
         for i in range(len(nutrientLabels)):
-            label = tk.Label(self, text=nutrientLabels[i] + " " + str(foodVals[i]) + units[i])
+            label = tk.Label(self, text=nutrientLabels[i] + " " + str(int(foodVals[i])) + units[i])
             if nutrientLabels[i] == "Saturated Fat" or nutrientLabels[i] == "Dietary Fiber" or nutrientLabels[i] == "Sugars":
                 label.grid(row=7+i, column=0, sticky="w", padx=20)      # Indents these lines as sub-labels for 'Total Fat' and "Total Carbohydrates'
             else:
