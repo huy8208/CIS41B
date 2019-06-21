@@ -13,15 +13,7 @@ add note why there isn't a status check
 lower limit for graphs (choice 3) due to API limits
 
 TO DO LIST:
-1. Choice 2
-    1a. Test with genSearch()
-    1b. Check to see if calculations are correct
-    1c. Add status?
-    1d. Add threading per query
-    1e.
-2. Choice 3
 3. Choice 4
-4. NEED TO TRY INSTALLING GEOCODER ON DE ANZA COMPUTERS
 
 All Keys:
 >> MDC Key:
@@ -58,11 +50,9 @@ import queue
 from api import *
 import numpy as np
 
-import collections  # remove after finished testing
-
 BASE_URL = "https://trackapi.nutritionix.com/v2"                # URL for Nutritionix API calls
-HEADERS = {"x-app-id": "d43b95b0",                              # Headers for Nutritionix API calls
-           "x-app-key": "ccc1f54d0392398034fcda2a489c3522",
+HEADERS = {"x-app-id": "2713eda2",                              # Headers for Nutritionix API calls
+           "x-app-key": "2f3f23571397305a0df5759ce0da0f2e",
            "Content-Type": "application/json"}
 
 
@@ -88,9 +78,12 @@ class MainWin(tk.Tk):
         tk.Button(self, text="Show nearby restaurants", command=lambda: ChoiceFour(self)).grid(padx=10, pady=10)
 
         self.protocol("WM_DELETE_WINDOW", self.closeWin)
+
     def closeWin(self):
+        """Closes all plot windows if main window is closed"""
         plt.close('all')
         self.destroy()
+
 
 class ChoiceOne(tk.Toplevel):
     def __init__(self, master):
@@ -159,7 +152,6 @@ class NutritionLabel(tk.Toplevel):
             master (MainWin class): links to MainWindow window
             data (dictionary): nutritional information for a specified food item
         """
-        print(data)
         super().__init__(master)
         self.title("Nutritional Facts")
         self.resizable = (False, False)
@@ -247,28 +239,33 @@ class ChoiceTwo(tk.Toplevel):
         self.queue = queue.Queue()
 
     def listboxLimit(self, event):
-        """Clears user selection if user selects more than 10 food items to calculate total calories"""
+        """Clears user selection if user selects more than 10 food items to calculate total calories
+
+        Arguments:
+            event (tkinter.Event): tkinter Event object storing event bind data
+        """
         if len(self.LB.curselection()) > 10:
             for i in range(len(self.results)):
                 self.LB.selection_clear(i)
             tkmb.showwarning("Warning", "You have selected more than 10 items to be searched. Please choose 10 or less food items.")
 
     def search(self):
+        """Checks user input and starts threads to search API for food items"""
         queries = []
         for field in self.fields:
             query = field.get()
-            if query.strip() != "":     # Adds non-empty fields as queries
+            if query.strip() != "":                         # Adds non-empty fields as queries
                 queries.append(query)
         if len(queries) == 0:
             tkmb.showerror("Error", "Please enter at least 1 search term in any of the four search fields.")
         else:
             self.statusVar.set("Searching for " + str(len(queries)) + " food(s)")
             self.update()
-            self.LB.delete(0, tk.END)               # Clears listbox for new data
-            self.results = {}                       # Clears results for new data
+            self.LB.delete(0, tk.END)                       # Clears listbox for new data
+            self.results = {}                               # Clears results for new data
 
             tList = []
-            for query in queries:
+            for query in queries:                           # Starts threads for API lookup
                 tList.append(threading.Thread(target=self.searchAPI, args=(query, )))
             for t in tList:
                 t.start()
@@ -277,18 +274,24 @@ class ChoiceTwo(tk.Toplevel):
                 data = self.queue.get()
                 n += 1
                 self.statusVar.set("Finished " + str(n) + "/" + str(len(tList)) + " searches.")
-                self.update()
-                self.results = {**self.results, **data}
-            for food in self.results:
+                self.update()                               # Updates GUI to reflect # of searches completed
+                self.results = {**self.results, **data}     # Merges existing results and new data into new results dict
+
+            for food in self.results:                       # Insert results into listbox
                 self.LB.insert(tk.END, food)
 
     def searchAPI(self, query):
+        """Threaded method to search API for food item and put it in the queue
+
+        Arguments:
+            query (string): food item to lookup in API
+        """
         response = genSearch(query, BASE_URL, HEADERS)
         self.queue.put(response)
 
     def calculate(self):
+        """Checks listbox selection for food items and calculates total calories of the selected food items"""
         indexes = self.LB.curselection()
-        print(indexes)
         if indexes is ():                           # If user presses "Print Label" before searching anything
             tkmb.showerror("Error", "Please search for and select at least one food item before pressing \'Calculate\'.")
         else:
@@ -297,72 +300,95 @@ class ChoiceTwo(tk.Toplevel):
                 foodName = self.LB.get(index)
                 foodItems[foodName] = self.results[foodName]
             total = 0
-            for item, id in foodItems.items():
-                if id is None:
+            for item, foodID in foodItems.items():
+                if foodID is None:                  # Checks if item is common, runs itemSearches based on food type (common or not)
                     total += commonItemSearch(item.replace("(Common)", ""), BASE_URL, HEADERS)["calories"]
                 else:
-                    total += brandItemSearch(id, BASE_URL, HEADERS)["calories"]
+                    total += brandItemSearch(foodID, BASE_URL, HEADERS)["calories"]
             self.calorieVar.set("Total Calories for " + str(len(indexes)) + " selected food(s): " + str(total))
-            self.update()
+            self.update()                           # Updates GUI to reflect total calories calculation
 
 
 class ChoiceThree(tk.Toplevel):
     def __init__(self, master):
+        """Initializes window for user to search a food item and display a calorie graph of top 10 results
+
+        Arguments:
+            master (MainWin class): links to MainWindow window
+        """
         super().__init__(master)
         self.title("Nutrition Graph")
         self.resizable = (False, False)
         self.grab_set()
 
-        self.UserText = tk.StringVar()
+        self.userText = tk.StringVar()
         tk.Label(self, text="Enter an food item to be graphed:").grid(pady=10, sticky="e")
-        E = tk.Entry(self, textvariable=self.UserText)
+        E = tk.Entry(self, textvariable=self.userText)
         E.grid(row=0, column=1, padx=10, pady=10)
         tk.Button(self, text="Search Branded Food Items", command=self.search).grid(row=1, column=1)
-        E.bind("<Return>", self.search)
 
     def search(self):
-        print("This is from self.UserText.get() ", self.UserText.get())
-        data = genSearch(self.UserText.get())
-        rangeY = []
+        """Checks user input and searches API for top 10 branded food items, sends data to be plotted"""
+        foodName = self.userText.get().strip()
+        if foodName == "":          # Show error window if user input is blank
+            tkmb.showerror("Error", "Query cannot be blank. Please a food item in the entry field.")
+        else:
+            data = genSearch(foodName, BASE_URL, HEADERS)
+            if len(data) <= 1:      # Show error window if results are too limited
+                tkmb.showerror("Error", "Less than 2 results were returned from your query. Double-check your query's spelling or try another search.")
+            else:
+                yRange = []
+                xRange = []
+                datapoints = 0      # Limits data points to 10 to prevent going over API limit
+                for food, foodID in data.items():
+                    if foodID is not None and datapoints <= 10:
+                        foodData = brandItemSearch(foodID, BASE_URL, HEADERS)
+                        yRange.append(round(foodData["calories"]))
+                        xRange.append(foodData["food_name"])
+                        datapoints += 1
 
-        for food, id in data.items():
-            if id is not None:
-                foodData = brandItemSearch(id, BASE_URL, HEADERS)
-                rangeY.append(round())
+                minVal = min(yRange)
+                maxVal = max(yRange)
+                avgVal = np.mean(yRange)
+                minPos = [i for i, x in enumerate(yRange) if x == minVal]       # Finds positions of min/max values to remove from data set for separate plotting
+                maxPos = [i for i, x in enumerate(yRange) if x == maxVal]
+                minLabels = [xRange[i] for i in minPos]
+                maxLabels = [xRange[i] for i in maxPos]
 
-        rangeY = [100, 80, 120, 120, 110, 220, 143.55, 50, 70, 50, 140, 70, 40, 40, 50, 90, 70, 110, 50, 70]
-        rangeX = ['Bite Size Dry Salami, Spicy', 'Cheddar Cheese, Minis', 'Mini Wafers, Vanilla', 'Organic Chicken & Maple Breakfast Sausage', 'Organic Uncured Beef Hot Dog', 'Pork Carnitas, Seasoned & Seared', 'Sparkling Apple Juice', 'Turkey Breast, Oven Roasted', 'Uncured Black Forest Ham', 'Uncured Thick Cut Bacon, Hickory Smoked', 'Oatmeal Bar, Chocolate', 'The Great Uncured Chicken Hot Dog, Organic', 'Organic Apple Snack, No Sugar Added', 'Apple & Strawberry Fruit Snack', 'Apple Strawberry Snack', 'Applesauce with Peaches', 'Applesauce, Unsweetened', 'Chicken & Maple Breakfast Sausage', 'Herb Turkey Breast', 'Hot Dog, Uncured Beef']
+                for i in sorted(minPos + maxPos, reverse=True):     # Removes min and max values to be plotted separately
+                    yRange.pop(i)
+                yRange = sorted(yRange)
 
-        # for item in data['branded']:
-        #     rangeY.append(round(item["nf_calories"],4))
-        #     rangeX.append(item["food_name"])
+                # Plotting lowest calories, highest calories, rest of data as bar graphs, average calories as line separately
+                self.plotCaloriesGraph(yRange, minVal, maxVal, avgVal, minLabels, maxLabels, foodName)
 
+    def plotCaloriesGraph(self, yRange, minVal, maxVal, avgVal, minLabels, maxLabels, food):
+        """Plots a bar graph displaying calorie count for a specified food item
 
-
-        maxElement = max(rangeY)
-        minElement = min(rangeY)
-        maxElementPosition = [i for i, x in enumerate(rangeY) if x == maxElement]
-        minElementPosition = [i for i, x in enumerate(rangeY) if x == minElement]
-        print("max : ",maxElement,"position :",maxElementPosition)
-        print("min : ",minElement,"position :",minElementPosition)
-
-        rangeX = np.asarray(rangeX)
-        rangeY = np.asarray(rangeY)
-
-        init = CaloriesWindow(self, lambda: self.plotCaloriesGraph(rangeX,rangeY))
-
-    def plotCaloriesGraph(self, rangeX, rangeY):
-        plt.bar(rangeX,rangeY,width=0.5,label='YEAHHH',color= '#7189bf')
-        plt.xlabel("Food brands")
-        plt.ylabel("Amount of calories")
-        plt.title("Calories Graph")
+        Arguments:
+            yRange (list): calorie count for food items (excluding min and max)
+            minVal (int): smallest calorie out of specified food items
+            maxVal (int): largest calorie out of specified food items
+            avgVal (float): average calories out of specified food items
+            minLabels (list): contains labels for food item(s) with smallest calorie amount
+            maxLabels (list): contains labels for food item(s) with largest calorie amount
+            food (string): name of specified food item
+        """
+        # Plots bar graphs for smallest, largest, and remaining foods separately to add identifying colors
+        plt.bar(minLabels, minVal, width=0.9, label="Lowest Calories: " + str(minVal), color="yellow")
+        plt.bar(np.linspace(len(minLabels), len(yRange), len(yRange)), yRange, width=0.9, color="blue")
+        plt.bar(np.linspace(len(yRange) + 1, len(yRange + maxLabels), len(maxLabels)), maxVal, width=0.9, label="Highest Calories: " + str(maxVal), color="orange")
+        plt.plot([0, len(yRange) + 1], [avgVal, avgVal], label="Average Calories: " + str(round(float(avgVal), 2)), color="black")
+        plt.xlabel("Branded Food Items")
+        plt.ylabel("Amount of Calories")
+        plt.title("Calories Graph for " + food)
         plt.legend(loc="best")
-
-        # plt.yticks(y_pos, y,fontsize=8, wrap=True, verticalalignment='center')
+        plt.xticks([])      # Hide x-axis labels since food names would be crowded
+        plt.show()
 
 
 class CaloriesWindow(tk.Toplevel):
-    def __init__(self,master, plotgraph):
+    def __init__(self, master, plotgraph):
         super().__init__(master)
         fig = plt.figure(figsize=(10,7))
         plotgraph()
@@ -415,8 +441,8 @@ class ShowRestaurantsInfo(tk.Toplevel):
         self.title("Restaurant(s) Information")
         self.font = tkf.Font(size=30, weight="bold")
         tk.Label(self, text="Nutrition Facts", font=self.font).grid(row=0, columnspan=2, sticky="nw")
-        tk.Label(self, text=data["food_name"]).grid(row=1, columnspan=2, sticky="nw")
-        tk.Label(self, text="Serving Size " + str(data["serving_qty"]) + " " + data["serving_unit"], font=self.bigBold).grid(row=2, columnspan=2, sticky="w")
+        #tk.Label(self, text=data["food_name"]).grid(row=1, columnspan=2, sticky="nw")
+        #tk.Label(self, text="Serving Size " + str(data["serving_qty"]) + " " + data["serving_unit"], font=self.bigBold).grid(row=2, columnspan=2, sticky="w")
         tk.Label(self, background="black").grid(row=3, columnspan=2, sticky="we")
 
 
