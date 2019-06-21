@@ -317,18 +317,18 @@ class ChoiceThree(tk.Toplevel):
         tk.Label(self, text="Enter an food item to be graphed:").grid(pady=10, sticky="e")
         E = tk.Entry(self, textvariable=self.UserText)
         E.grid(row=0, column=1, padx=10, pady=10)
-        tk.Button(self, text="Search Branded Food Items", command=self.search).grid(row=1, column=1)
+        tk.Button(self, text="Search Branded Food Items", command= lambda: self.search(self.UserText)).grid(row=1, column=1)
         E.bind("<Return>", self.search)
 
-    def search(self):
+    def search(self,event):
         print("This is from self.UserText.get() ", self.UserText.get())
-        data = genSearch(self.UserText.get())
+        # data = genSearch(self.UserText.get(),BASE_URL,HEADERS)
         rangeY = []
 
-        for food, id in data.items():
-            if id is not None:
-                foodData = brandItemSearch(id, BASE_URL, HEADERS)
-                rangeY.append(round())
+        # for food, id in data.items():
+        #     if id is not None:
+        #         foodData = brandItemSearch(id, BASE_URL, HEADERS)
+        #         rangeY.append(round())
 
         rangeY = [100, 80, 120, 120, 110, 220, 143.55, 50, 70, 50, 140, 70, 40, 40, 50, 90, 70, 110, 50, 70]
         rangeX = ['Bite Size Dry Salami, Spicy', 'Cheddar Cheese, Minis', 'Mini Wafers, Vanilla', 'Organic Chicken & Maple Breakfast Sausage', 'Organic Uncured Beef Hot Dog', 'Pork Carnitas, Seasoned & Seared', 'Sparkling Apple Juice', 'Turkey Breast, Oven Roasted', 'Uncured Black Forest Ham', 'Uncured Thick Cut Bacon, Hickory Smoked', 'Oatmeal Bar, Chocolate', 'The Great Uncured Chicken Hot Dog, Organic', 'Organic Apple Snack, No Sugar Added', 'Apple & Strawberry Fruit Snack', 'Apple Strawberry Snack', 'Applesauce with Peaches', 'Applesauce, Unsweetened', 'Chicken & Maple Breakfast Sausage', 'Herb Turkey Breast', 'Hot Dog, Uncured Beef']
@@ -346,20 +346,26 @@ class ChoiceThree(tk.Toplevel):
         print("max : ",maxElement,"position :",maxElementPosition)
         print("min : ",minElement,"position :",minElementPosition)
 
-        rangeX = np.asarray(rangeX)
-        rangeY = np.asarray(rangeY)
+        rangeX = np.array(rangeX)
+        rangeY = np.array(rangeY)
 
-        init = CaloriesWindow(self, lambda: self.plotCaloriesGraph(rangeX,rangeY))
+        init = CaloriesWindow(self, lambda: self.plotCaloriesGraph(rangeX,rangeY,minElementPosition,maxElementPosition))
 
-    def plotCaloriesGraph(self, rangeX, rangeY):
-        plt.bar(rangeX,rangeY,width=0.5,label='YEAHHH',color= '#7189bf')
+    def plotCaloriesGraph(self, rangeX, rangeY, minElementPosition, maxElementPosition):
+        barlist = plt.bar(rangeX,rangeY,width=0.5,label='Max Calories',color= '#7189bf')
+
+        for i in range(len(maxElementPosition)): # Set max column color
+            barlist[maxElementPosition[i]].set_color('r')
+
+        for i in range(len(minElementPosition)):
+            barlist[minElementPosition[i]].set_color('b')
+
         plt.xlabel("Food brands")
         plt.ylabel("Amount of calories")
         plt.title("Calories Graph")
         plt.legend(loc="best")
-
-        # plt.yticks(y_pos, y,fontsize=8, wrap=True, verticalalignment='center')
-
+        plt.xticks(rangeX,np.arange(1,21))
+        #NEED TO ADD MIN VALUE LABEL
 
 class CaloriesWindow(tk.Toplevel):
     def __init__(self,master, plotgraph):
@@ -395,8 +401,8 @@ class ChoiceFour(tk.Toplevel):
             self.LB.insert(tk.END,restaurant['name'])
 
         # COMMENT OUT WHEN DONE TESTING
-        # test = json.dumps(self.data,indent = 4)
-        # print(test)
+        test = json.dumps(self.data,indent = 4)
+        print(test)
 
     def checkValid(self):
         if len(self.LB.curselection()) <= 0:
@@ -412,25 +418,26 @@ class ChoiceFour(tk.Toplevel):
                 if restaurant["name"] in restaurantNames:
                     selected_Res_Data.append(restaurant)
 
-            print(selected_Res_Data)
-            init = ShowRestaurantsWindow(self,selected_Res_Data)
+            threads = []
+            for i,restaurant in enumerate(selected_Res_Data):
+                t = threading.Thread(target= ShowRestaurantsWindow, args = (self,selected_Res_Data,i),name="THREAD "+ str(i))
+                threads.append(t)
+
+            for t in threads:
+                t.start()
 
 class ShowRestaurantsWindow(tk.Toplevel):
-    def __init__(self,master,restaurantNames):
+    def __init__(self,master,restaurant,i):
         super().__init__(master)
         self.title("Restaurant(s) Information")
         self.font = tkf.Font(size=30, weight="bold")
-        tk.Label(self, text=restaurantNames[0]['name'], font=self.font).grid(row=0, columnspan=2, sticky="nw")
-        tk.Label(self, text=restaurantNames[0]['address']).grid(row=1, columnspan=2, sticky="nw")
-        tk.Label(self, text=restaurantNames[0]['website']).grid(row=2, columnspan=2, sticky="nw")
-        tk.Label(self, text=restaurantNames[0]['phone']).grid(row=3, columnspan=2, sticky="nw")
+        tk.Label(self, text=restaurant[i]['name'], font=self.font).grid(row=0, columnspan=2, sticky="nw")
+        tk.Label(self, text=restaurant[i]['address']).grid(row=1, columnspan=2, sticky="nw")
+        tk.Label(self, text=restaurant[i]['website']).grid(row=2, columnspan=2, sticky="nw")
+        tk.Label(self, text=restaurant[i]['phone']).grid(row=3, columnspan=2, sticky="nw")
 
 
 
-
-        # tk.Label(self, text=data["food_name"]).grid(row=1, columnspan=2, sticky="nw")
-        # tk.Label(self, text="Serving Size " + str(data["serving_qty"]) + " " + data["serving_unit"], font=self.bigBold).grid(row=2, columnspan=2, sticky="w")
-        # tk.Label(self, background="black").grid(row=3, columnspan=2, sticky="we")
 
 
         self.resizable = (False, False)
