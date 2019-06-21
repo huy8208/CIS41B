@@ -395,8 +395,8 @@ class ChoiceFour(tk.Toplevel):
             self.LB.insert(tk.END,restaurant['name'])
 
         # COMMENT OUT WHEN DONE TESTING
-        test = json.dumps(self.data,indent = 4)
-        print(test)
+        # test = json.dumps(self.data,indent = 4)
+        # print(test)
 
     def checkValid(self):
         if len(self.LB.curselection()) <= 0:
@@ -404,20 +404,33 @@ class ChoiceFour(tk.Toplevel):
         elif len(self.LB.curselection()) > 3:
             tkmb.showerror("Error", "Please choose less than 3 restaurants")
         else:
-            restaurants = [self.LB.get(restaurant) for restaurant in self.LB.curselection()]
-            print(restaurants)
+            restaurantNames = [self.LB.get(restaurant) for restaurant in self.LB.curselection()]
 
-            init = ShowRestaurantsInfo(self,)
+            selected_Res_Data = []
 
-class ShowRestaurantsInfo(tk.Toplevel):
-    def __init__(self,master,restaurants):
+            for restaurant in self.data["locations"]: # Retrieve user's chosen restaurants data for ShowRestaurantsWindow
+                if restaurant["name"] in restaurantNames:
+                    selected_Res_Data.append(restaurant)
+
+            print(selected_Res_Data)
+            init = ShowRestaurantsWindow(self,selected_Res_Data)
+
+class ShowRestaurantsWindow(tk.Toplevel):
+    def __init__(self,master,restaurantNames):
         super().__init__(master)
         self.title("Restaurant(s) Information")
         self.font = tkf.Font(size=30, weight="bold")
-        tk.Label(self, text="Nutrition Facts", font=self.font).grid(row=0, columnspan=2, sticky="nw")
-        tk.Label(self, text=data["food_name"]).grid(row=1, columnspan=2, sticky="nw")
-        tk.Label(self, text="Serving Size " + str(data["serving_qty"]) + " " + data["serving_unit"], font=self.bigBold).grid(row=2, columnspan=2, sticky="w")
-        tk.Label(self, background="black").grid(row=3, columnspan=2, sticky="we")
+        tk.Label(self, text=restaurantNames[0]['name'], font=self.font).grid(row=0, columnspan=2, sticky="nw")
+        tk.Label(self, text=restaurantNames[0]['address']).grid(row=1, columnspan=2, sticky="nw")
+        tk.Label(self, text=restaurantNames[0]['website']).grid(row=2, columnspan=2, sticky="nw")
+        tk.Label(self, text=restaurantNames[0]['phone']).grid(row=3, columnspan=2, sticky="nw")
+
+
+
+
+        # tk.Label(self, text=data["food_name"]).grid(row=1, columnspan=2, sticky="nw")
+        # tk.Label(self, text="Serving Size " + str(data["serving_qty"]) + " " + data["serving_unit"], font=self.bigBold).grid(row=2, columnspan=2, sticky="w")
+        # tk.Label(self, background="black").grid(row=3, columnspan=2, sticky="we")
 
 
         self.resizable = (False, False)
