@@ -387,35 +387,30 @@ class ChoiceThree(tk.Toplevel):
         plt.show()
 
 
-class CaloriesWindow(tk.Toplevel):
-    def __init__(self, master, plotgraph):
-        super().__init__(master)
-        fig = plt.figure(figsize=(10,7))
-        plotgraph()
-        canvas = FigureCanvasTkAgg(fig, master=self)
-        canvas.get_tk_widget().grid()
-        canvas.draw()
-
-
 class ChoiceFour(tk.Toplevel):
+    """Initializes window for user to search a food item and display a calorie graph of top 10 results
+
+    Arguments:
+        master (MainWin class): links to MainWindow window
+    """
     def __init__(self, master):
         super().__init__(master)
         self.title("Nearby Restaurants")
-        # self.resizable(False,False)
+        self.resizable(False,False)
 
-        # List box
+        # List box with scroll bar.
         self.scroll = tk.Scrollbar(self)
         self.LB = tk.Listbox(self, height=10, width=50, selectmode="multiple", yscrollcommand=self.scroll.set)
-        self.LB.grid(padx = 10, pady = 10,row=0,column=0)
+        self.LB.grid(padx = 10,row=0,column=0)
         self.scroll.grid(column=1, sticky="ns")
         tk.Button(self, text="Find nearby restaurants", command= self.insertToListBox).grid(row=1,column=0)
         self.scroll.config(command=self.LB.yview)      # Allows scrollbar to work with listbox y-scrolling
-        tk.Button(self, text="View restaurant(s) detail",command = self.checkValid).grid(row=2,column=0,sticky='w')
-
-        # Json structure
-        self.data = {}
+        # A list contains dictionaries of nearby restaurants.
+        self.data = []
 
     def insertToListBox(self):
+        tk.Button(self, text="View restaurant(s) detail",command = self.checkValid).grid(row=2,column=0,sticky="ns")
+        """Insert all restaurant's names to the listbox."""
         self.data = getNearbyRestaurants(BASE_URL, HEADERS)
         for restaurant in self.data['locations']:
             self.LB.insert(tk.END,restaurant['name'])
@@ -425,41 +420,38 @@ class ChoiceFour(tk.Toplevel):
         print(test)
 
     def checkValid(self):
+        """Check if user select at most 3 choices, using processes to call ShowRestaurantsWindow to display
+        multiple restaurants' information"""
         if len(self.LB.curselection()) <= 0:
             tkmb.showerror("Error", "Please click find my restaurants button first !")
         elif len(self.LB.curselection()) > 3:
             tkmb.showerror("Error", "Please choose less than 3 restaurants")
         else:
-            restaurantNames = [self.LB.get(restaurant) for restaurant in self.LB.curselection()]
-
-            selected_Res_Data = []
-
-            for restaurant in self.data["locations"]: # Retrieve user's chosen restaurants data for ShowRestaurantsWindow
-                if restaurant["name"] in restaurantNames:
-                    selected_Res_Data.append(restaurant)
+            curSelected = self.LB.curselection()
 
             threads = []
-            for i,restaurant in enumerate(selected_Res_Data):
-                t = threading.Thread(target= ShowRestaurantsWindow, args = (self,selected_Res_Data,i),name="THREAD "+ str(i))
+            for index in curSelected:
+                t = threading.Thread(target= ShowRestaurantsWindow, args = (self,self.data,index))
                 threads.append(t)
 
             for t in threads:
                 t.start()
 
 class ShowRestaurantsWindow(tk.Toplevel):
+    """Initializes window to display restaurant's name, address, website and phone number.
+
+    Arguments:
+        master (MainWin class): links to MainWindow window
+
+    """
     def __init__(self,master,restaurant,i):
         super().__init__(master)
         self.title("Restaurant(s) Information")
         self.font = tkf.Font(size=30, weight="bold")
-        tk.Label(self, text=restaurant[i]['name'], font=self.font).grid(row=0, columnspan=2, sticky="nw")
-        tk.Label(self, text=restaurant[i]['address']).grid(row=1, columnspan=2, sticky="nw")
-        tk.Label(self, text=restaurant[i]['website']).grid(row=2, columnspan=2, sticky="nw")
-        tk.Label(self, text=restaurant[i]['phone']).grid(row=3, columnspan=2, sticky="nw")
-
-
-
-
-
+        tk.Label(self, text=restaurant['locations'][i]['name'], font=self.font).grid(row=0, columnspan=2, sticky="nw")
+        tk.Label(self, text='Address: ' + restaurant['locations'][i]['address']).grid(row=1, columnspan=2, sticky="nw")
+        tk.Label(self, text='Website: ' + restaurant['locations'][i]['website']).grid(row=2, columnspan=2, sticky="nw")
+        tk.Label(self, text='Tel: ' + restaurant['locations'][i]['phone']).grid(row=3, columnspan=2, sticky="nw")
         self.resizable = (False, False)
         self.grab_set()
 
@@ -467,4 +459,3 @@ if __name__ == '__main__':
     app = MainWin()
     gui2fg()
     app.mainloop()
-
