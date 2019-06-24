@@ -6,44 +6,18 @@ Final Project - main.py
 Imported Files:
 - api.py
 
-Imported Modules:
-- geocoder (requires command line installation)
+NOTE: Excessive testing may go over the API search limit. You can change to a different set of API keys by
+changing API_KEY_SET from 0, 1, 2, 3 if api.py raises a KeyError exception.
 
-add note why there isn't a status check
-lower limit for graphs (choice 3) due to API limits
-
-TO DO LIST:
-3. Choice 4
-
-All Keys:
->> MDC Key:
-2713eda2
-2f3f23571397305a0df5759ce0da0f2e
-
->> MDC Key 2: (FOR DEMO)
-d5b800e9
-d95b0fdcdf5ac259b8a7b80b40200519
-
->> Huy Key:
-a6db4eec
-dd88c3b6ece495fd91ed7bb18bb133a2
-
->> Huy Key 2:
-d43b95b0
-ccc1f54d0392398034fcda2a489c3522
-
-@author Huy Nguyen, Minhduc Cao
-@version 1.3
-@date 2019.06.19
+@author Huy Nguyen (Choice 3-4), Minhduc Cao (Choice 1-2)
+@version 1.4
+@date 2019.06.23
 """
 import os   # For gui2fg()
 import sys  # For gui2fg()
 import tkinter as tk
 import tkinter.messagebox as tkmb
 import tkinter.font as tkf
-import matplotlib
-matplotlib.use('TkAgg')
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 import threading
 import queue
@@ -51,15 +25,18 @@ from api import *
 import numpy as np
 
 BASE_URL = "https://trackapi.nutritionix.com/v2"                # URL for Nutritionix API calls
-HEADERS = {"x-app-id": "2713eda2",                              # Headers for Nutritionix API calls
-           "x-app-key": "2f3f23571397305a0df5759ce0da0f2e",
+API_KEY_SET = 1                                                 # Change from 0, 1, 2, 3 if api.py raises a KeyError exception (due to API limits)
+API_IDS = ["2713eda", "d5b800e9", "a6db4eec", "d43b95b0"]
+API_KEYS = ["2f3f23571397305a0df5759ce0da0f2e", "d95b0fdcdf5ac259b8a7b80b40200519",
+            "dd88c3b6ece495fd91ed7bb18bb133a2", "ccc1f54d0392398034fcda2a489c3522"]
+HEADERS = {"x-app-id": API_IDS[API_KEY_SET],                              # Headers for Nutritionix API calls
+           "x-app-key": API_KEYS[API_KEY_SET],
            "Content-Type": "application/json"}
 
 
 def gui2fg():
     """Brings tkinter GUI to foreground on Mac
-    Call gui2fg() after creating main window and before mainloop()
-    start
+    Call gui2fg() after creating main window and before mainloop() start
     """
     if sys.platform == 'darwin':
         tmpl = 'tell application "System Events" to set frontmost of every process whose unix id is %d to true'
@@ -242,7 +219,7 @@ class ChoiceTwo(tk.Toplevel):
         """Clears user selection if user selects more than 10 food items to calculate total calories
 
         Arguments:
-            event (tkinter.Event): tkinter Event object storing event bind data
+            event (tkinter.Event): tkinter Event object storing event bind data, unused
         """
         if len(self.LB.curselection()) > 10:
             for i in range(len(self.results)):
@@ -277,8 +254,11 @@ class ChoiceTwo(tk.Toplevel):
                 self.update()                               # Updates GUI to reflect # of searches completed
                 self.results = {**self.results, **data}     # Merges existing results and new data into new results dict
 
-            for food in self.results:                       # Insert results into listbox
-                self.LB.insert(tk.END, food)
+            if len(self.results) == 0:
+                tkmb.showinfo("No Results", "No results found. Double-check your search queries or try a new search.")
+            else:
+                for food in self.results:                       # Insert results into listbox
+                    self.LB.insert(tk.END, food)
 
     def searchAPI(self, query):
         """Threaded method to search API for food item and put it in the queue
@@ -343,7 +323,6 @@ class ChoiceThree(tk.Toplevel):
                 for food, foodID in data.items():
                     if foodID is not None and datapoints <= 10:
                         foodData = brandItemSearch(foodID, BASE_URL, HEADERS)
-                        test = json.dumps(foodData,indent = 4)
                         yRange.append(round(foodData["calories"]))
                         xRange.append(foodData["food_name"])
                         datapoints += 1
@@ -389,28 +368,28 @@ class ChoiceThree(tk.Toplevel):
 
 
 class ChoiceFour(tk.Toplevel):
-    """Initializes window for user to search a food item and display a calorie graph of top 10 results
-
-    Arguments:
-        master (MainWin class): links to MainWindow window
-    """
     def __init__(self, master):
+        """Initializes window for user to search a food item and display a calorie graph of top 10 results
+
+        Arguments:
+            master (MainWin class): links to MainWindow window
+        """
         super().__init__(master)
         self.title("Nearby Restaurants")
-        self.resizable(False,False)
+        self.resizable(False, False)
 
         # List box with scroll bar.
         self.scroll = tk.Scrollbar(self)
         self.LB = tk.Listbox(self, height=10, width=50, selectmode="multiple", yscrollcommand=self.scroll.set)
-        self.LB.grid(padx = 10,row=0,column=0)
-        self.scroll.grid(column=1, sticky="ns")
-        tk.Button(self, text="Find nearby restaurants", command= self.insertToListBox).grid(row=1,column=0)
+        self.LB.grid(padx=10, row=0, column=0)
+        self.scroll.grid(row=0, column=1, sticky="ns")
+        tk.Button(self, text="Find nearby restaurants", command=self.insertToListBox).grid(row=1,column=0)
         self.scroll.config(command=self.LB.yview)      # Allows scrollbar to work with listbox y-scrolling
         # A list contains dictionaries of nearby restaurants.
         self.data = []
 
     def insertToListBox(self):
-        """Insert all restaurant's names to the listbox."""
+        """Insert all restaurant's names to the listbox"""
         tk.Button(self, text="View restaurant(s) detail",command = self.checkValid).grid(row=2,column=0,sticky="ns")
         self.data = getNearbyRestaurants(BASE_URL, HEADERS)
         for restaurant in self.data['locations']:
@@ -430,13 +409,12 @@ class ChoiceFour(tk.Toplevel):
 
 
 class ShowRestaurantsWindow(tk.Toplevel):
-    """Initializes window to display restaurant's name, address, website and phone number.
+    def __init__(self, master, restaurant, i):
+        """Initializes window to display restaurant's name, address, website and phone number.
 
-    Arguments:
-        master (MainWin class): links to MainWindow window
-
-    """
-    def __init__(self,master,restaurant,i):
+        Arguments:
+            master (MainWin class): links to MainWindow window
+        """
         super().__init__(master)
         self.title("Restaurant(s) Information")
         self.font = tkf.Font(size=30, weight="bold")
@@ -445,8 +423,7 @@ class ShowRestaurantsWindow(tk.Toplevel):
         tk.Label(self, text='Address: ' + restaurant['locations'][i]['address']).grid(row=2, columnspan=2, sticky="nw")
         tk.Label(self, text='Website: ' + restaurant['locations'][i]['website']).grid(row=3, columnspan=2, sticky="nw")
 
-
-        for res in restaurant['locations']: #
+        for res in restaurant['locations']:
             if not res['phone']:
                 res['phone'] = 'unavailable'
         tk.Label(self, text='Contact number: ' + restaurant['locations'][i]['phone']).grid(row=4, columnspan=2, sticky="nw")
@@ -454,7 +431,8 @@ class ShowRestaurantsWindow(tk.Toplevel):
         self.resizable = (False, False)
         self.grab_set()
 
+
 if __name__ == '__main__':
     app = MainWin()
-    gui2fg()
+    gui2fg()            # For Mac
     app.mainloop()

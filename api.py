@@ -3,12 +3,15 @@ CIS 41B (01Y)
 Final Project - api.py
 ~ Module storing all functions related to pulling data from the Nutritionix API
 
-TO DO LIST:
-1. Check if ATTRIBUTES and NEW_ATTRIBUTES work properly
+Externally Imported Modules:
+- geocoder (requires command line installation)
 
-@author Huy Nguyen, Minhduc Cao
-@version 1.2
-@date 2019.06.19
+NOTE: geocoder requires a command line installation by running the line:
+'pip install geocoder'
+
+@author Huy Nguyen (getNearbyRestaurants), Minhduc Cao (genSearch, brandItemSearch, commonItemSearch)
+@version 1.3
+@date 2019.06.23
 """
 import json
 import requests
