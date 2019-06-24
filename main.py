@@ -343,6 +343,7 @@ class ChoiceThree(tk.Toplevel):
                 for food, foodID in data.items():
                     if foodID is not None and datapoints <= 10:
                         foodData = brandItemSearch(foodID, BASE_URL, HEADERS)
+                        test = json.dumps(foodData,indent = 4)
                         yRange.append(round(foodData["calories"]))
                         xRange.append(foodData["food_name"])
                         datapoints += 1
@@ -409,15 +410,11 @@ class ChoiceFour(tk.Toplevel):
         self.data = []
 
     def insertToListBox(self):
-        tk.Button(self, text="View restaurant(s) detail",command = self.checkValid).grid(row=2,column=0,sticky="ns")
         """Insert all restaurant's names to the listbox."""
+        tk.Button(self, text="View restaurant(s) detail",command = self.checkValid).grid(row=2,column=0,sticky="ns")
         self.data = getNearbyRestaurants(BASE_URL, HEADERS)
         for restaurant in self.data['locations']:
             self.LB.insert(tk.END,restaurant['name'])
-
-        # COMMENT OUT WHEN DONE TESTING
-        test = json.dumps(self.data,indent = 4)
-        print(test)
 
     def checkValid(self):
         """Check if user select at most 3 choices, using processes to call ShowRestaurantsWindow to display
@@ -428,14 +425,9 @@ class ChoiceFour(tk.Toplevel):
             tkmb.showerror("Error", "Please choose less than 3 restaurants")
         else:
             curSelected = self.LB.curselection()
-
-            threads = []
             for index in curSelected:
-                t = threading.Thread(target= ShowRestaurantsWindow, args = (self,self.data,index))
-                threads.append(t)
+                ShowRestaurantsWindow(self,self.data,index)
 
-            for t in threads:
-                t.start()
 
 class ShowRestaurantsWindow(tk.Toplevel):
     """Initializes window to display restaurant's name, address, website and phone number.
@@ -449,9 +441,16 @@ class ShowRestaurantsWindow(tk.Toplevel):
         self.title("Restaurant(s) Information")
         self.font = tkf.Font(size=30, weight="bold")
         tk.Label(self, text=restaurant['locations'][i]['name'], font=self.font).grid(row=0, columnspan=2, sticky="nw")
-        tk.Label(self, text='Address: ' + restaurant['locations'][i]['address']).grid(row=1, columnspan=2, sticky="nw")
-        tk.Label(self, text='Website: ' + restaurant['locations'][i]['website']).grid(row=2, columnspan=2, sticky="nw")
-        tk.Label(self, text='Tel: ' + restaurant['locations'][i]['phone']).grid(row=3, columnspan=2, sticky="nw")
+        tk.Label(self, background="black").grid(row=1,columnspan=2,sticky="we")
+        tk.Label(self, text='Address: ' + restaurant['locations'][i]['address']).grid(row=2, columnspan=2, sticky="nw")
+        tk.Label(self, text='Website: ' + restaurant['locations'][i]['website']).grid(row=3, columnspan=2, sticky="nw")
+
+
+        for res in restaurant['locations']: #
+            if not res['phone']:
+                res['phone'] = 'unavailable'
+        tk.Label(self, text='Contact number: ' + restaurant['locations'][i]['phone']).grid(row=4, columnspan=2, sticky="nw")
+
         self.resizable = (False, False)
         self.grab_set()
 
