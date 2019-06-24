@@ -15,3 +15,16 @@ dedicated to testing different options of pulling data from the API for use in t
 also encouraged both of us to use version control with Github to more easily deal with updating code. Although we
 were only able to use version control for the last week of the project, it made passing code from member to member
 much simpler and less complicated than sending Python scripts file by file.
+
+
+// Duc Huy Nguyen
+
+Although I have worked with api before, in this project, going through a bunch of api documents and figuring out
+what type of apis should be used to best match our project's purpose have cost me a lot of time. This is mainly
+because the api instruction documents are written for general use in different languages. Therefore, I have learned
+how to read and use api more efficiently. Additionally, I have also learned that when working in a team, when I write
+codes that can be used by both me and my partners, I need to take into consideration all the possible cases so that not
+only it works for my convenience but also works effectively for my partners. Thus, avoiding lost time due to revising
+and fixing the codes. Lastly, using version control with Github have helped us so much in speeding up our project. Therefore,
+I will probably use Github from now on not only because it allow us to collaborate productively but also it reduces the time
+taken to join code manually.

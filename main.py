@@ -9,7 +9,7 @@ Imported Files:
 NOTE: Excessive testing may go over the API search limit. You can change to a different set of API keys by
 changing API_KEY_SET from 0, 1, 2, 3 if api.py raises a KeyError exception.
 
-@author Huy Nguyen (Choice 3-4), Minhduc Cao (Choice 1-2)
+@author Duc Huy Nguyen (Choice 3-4), Minhduc Cao (Choice 1-2)
 @version 1.4
 @date 2019.06.23
 """
@@ -18,6 +18,8 @@ import sys  # For gui2fg()
 import tkinter as tk
 import tkinter.messagebox as tkmb
 import tkinter.font as tkf
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import threading
 import queue

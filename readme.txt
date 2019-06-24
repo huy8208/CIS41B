@@ -7,6 +7,13 @@ Team Members: Duc Huy Nguyen, Minhduc Cao
 This project allows a user to look up specific or general food items to see nutritional facts, total calorie
 count, average calorie count for a food item, and to look up restaurants' data nearby from the Nutritionix API.
 
+# Remove this part if you don't like
+This program provides users with nutritional values information from common foods and
+various food brands for the purpose of improving their eating habits. The program has four functions, which are :
+query a food data API (Nutritionix.com) based on user-input to show nutritional label for a single food item,
+calculating total calories counts from up to 4 different food items, displaying a graph of average calories
+based on user input item and find nearby.
+
 
 >>> IMPORTANT <<<
 Our program requires the use of an external Python module called 'geocoder', specifically for api.py.
@@ -15,6 +22,12 @@ It is documented here: https://pypi.org/project/geocoder/
 Please install the module via command line by executing the following line without quotes:
 'pip install geocoder'
 
+Make sure you have pip installed on your system, if you already have pip installed, please skips this part:
+    1. To install pip, go to this link https://www.liquidweb.com/kb/install-pip-windows/ and download get-pip.py
+    2. Open a command prompt and navigate to the folder containing get-pip.py.
+    3. Run the following command: python get-pip.py
+    4. Pip is now installed, you can run >>> pip --version and >>> python -m pip install --upgrade pip
+    
 If the installation fails, please let one of us know so we can remove code that deals with the module.
 
 In addition, the API we're using has data restrictions on searching items which prompted us to add limits on
@@ -38,5 +51,3 @@ Data Analysis / Visualization - main.py with plotting graphs to show calorie cou
 GUI - main.py with the use of tkinter windows
 Web Access - api.py with the use of functions to pull data from the Nutritionix API
 Multiprocessing - main.py with the use of multithreading to pull data from the API based on multiple queries
-
-
