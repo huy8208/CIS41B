@@ -11,7 +11,7 @@ with version control in a team with Github. One of the things I realized about A
 multiple to decide on the one we used for this project, is the lack of Python-specific sample code. Having gone
 from this class's notes where Python is the assumed language, the API documentation only provides general
 instructions since the API should be accessible through multiple languages. This led to a large chunk of time
-dedicated to testing different options of pulling data from the API for use in this project. - Working in a team
+dedicated to testing different options of pulling data from the API for use in this project. Working in a team
 also encouraged both of us to use version control with Github to more easily deal with updating code. Although we
 were only able to use version control for the last week of the project, it made passing code from member to member
 much simpler and less complicated than sending Python scripts file by file.
