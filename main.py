@@ -10,8 +10,8 @@ NOTE: Excessive testing may go over the API search limit. You can change to a di
 changing API_KEY_SET from 0, 1, 2, 3 if api.py raises a KeyError exception.
 
 @author Duc Huy Nguyen (Choice 3-4), Minhduc Cao (Choice 1-2)
-@version 1.4
-@date 2019.06.23
+@version 1.5
+@date 2019.06.24
 """
 import os   # For gui2fg()
 import sys  # For gui2fg()
@@ -331,7 +331,7 @@ class ChoiceThree(tk.Toplevel):
 
                 minVal = min(yRange)
                 maxVal = max(yRange)
-                avgVal = np.mean(yRange)
+                avgVal = float(np.mean(yRange))
                 minPos = [i for i, x in enumerate(yRange) if x == minVal]       # Finds positions of min/max values to remove from data set for separate plotting
                 maxPos = [i for i, x in enumerate(yRange) if x == maxVal]
                 minLabels = [xRange[i] for i in minPos]
@@ -386,30 +386,29 @@ class ChoiceFour(tk.Toplevel):
         self.LB = tk.Listbox(self, height=10, width=50, selectmode="single", yscrollcommand=self.scroll.set)
         self.LB.grid(padx=10, row=1, column=0)
         self.scroll.grid(row=1, column=1, sticky="ns")
-        tk.Button(self, text="Find nearby restaurants", command=self.insertToListBox).grid(row=2,column=0)
+        tk.Button(self, text="Find nearby restaurants", command=self.insertToListBox).grid(row=2, column=0)
         self.scroll.config(command=self.LB.yview)      # Allows scrollbar to work with listbox y-scrolling
         # A list contains dictionaries of nearby restaurants.
         self.data = []
+
     def insertToListBox(self):
         """Insert all restaurant's names to the listbox"""
-        tk.Button(self, text="View restaurant detail",command = self.checkValid).grid(row=3,column=0,sticky="ns")
+        tk.Button(self, text="View restaurant detail", command=self.checkValid).grid(row=3, column=0, sticky="ns")
         self.data = getNearbyRestaurants(BASE_URL, HEADERS)
         for restaurant in self.data['locations']:
-            self.LB.insert(tk.END,restaurant['name'])
+            self.LB.insert(tk.END, restaurant['name'])
 
     def checkValid(self):
         """Check if user select at most 3 choices, using processes to call ShowRestaurantsWindow to display
         multiple restaurants' information"""
         curSelected = self.LB.curselection()
-        threads = []
-        menu = self.searchAPI(self.data,*curSelected)
-        resWindow = ShowRestaurantsWindow(self,self.data,*curSelected,list(menu.values()),list(menu.keys()))
+        menu = self.searchAPI(self.data, *curSelected)
+        resWindow = ShowRestaurantsWindow(self, self.data, *curSelected, list(menu.values()), list(menu.keys()))
 
-        for k,v in menu.items():
-            resWindow.LB.insert(tk.END,k)
+        for k, v in menu.items():
+            resWindow.LB.insert(tk.END, k)
 
-
-    def searchAPI(self, restaurantList,index):
+    def searchAPI(self, restaurantList, index):
         """Input chosen restaurant to api genSearch to return food menu.
 
         Arguments:
@@ -419,8 +418,9 @@ class ChoiceFour(tk.Toplevel):
         response = genSearch(restaurantList['locations'][index]['name'], BASE_URL, HEADERS)
         return response
 
+
 class ShowRestaurantsWindow(tk.Toplevel):
-    def __init__(self, master, restaurant, i,menuID,dishesName):
+    def __init__(self, master, restaurant, i, menuID, dishesName):
         """Initializes window to display restaurant's name, address, website and phone number.
 
         Arguments:
@@ -434,7 +434,7 @@ class ShowRestaurantsWindow(tk.Toplevel):
         self.title("Restaurant(s) Information")
         self.font = tkf.Font(size=30, weight="bold")
         tk.Label(self, text=restaurant['locations'][i]['name'], font=self.font).grid(row=0, columnspan=2, sticky="nw")
-        tk.Label(self, background="black").grid(row=1,columnspan=2,sticky="we")
+        tk.Label(self, background="black").grid(row=1, columnspan=2, sticky="we")
         tk.Label(self, text='Address: ' + restaurant['locations'][i]['address']).grid(row=2, columnspan=2, sticky="nw")
         tk.Label(self, text='Website: ' + restaurant['locations'][i]['website']).grid(row=3, columnspan=2, sticky="nw")
 
@@ -446,21 +446,20 @@ class ShowRestaurantsWindow(tk.Toplevel):
 
         # Adding restaurants menus in listbox
         self.headline = tkf.Font(size=24, weight="bold")
-        tk.Label(self, text='Menu',font=self.headline).grid(row=5, column=0,columnspan=2, sticky="n")
-        tk.Label(self, text="Please select up to 3 food items to view nutrition labels.").grid(row=6, column=0,padx=10, sticky="n")
+        tk.Label(self, text='Menu', font=self.headline).grid(row=5, column=0, columnspan=2, sticky="n")
+        tk.Label(self, text="Please select up to 3 food items to view nutrition labels.").grid(row=6, column=0, padx=10, sticky="n")
         self.scroll = tk.Scrollbar(self)
         self.scroll.grid(row=7, column=1, sticky="nsw")             # Grids scrollbar in 2nd column next to listbox
         self.LB = tk.Listbox(self, height=15, width=50, selectmode="multiple", yscrollcommand=self.scroll.set)
         self.LB.grid(row=7, padx=5, pady=10)
         self.scroll.config(command=self.LB.yview)
 
-
-        tk.Button(self, text="Print nutritional label for selected food items",command = lambda : self.getMenu(menuID,dishesName)).grid(row=8,column=0,sticky="ns")
+        tk.Button(self, text="Print nutritional label for selected food items", command=lambda: self.getMenu(menuID, dishesName)).grid(row=8, column=0, sticky="ns")
 
         self.resizable = (False, False)
         self.grab_set()
 
-    def getMenu(self,menuID,dishesName):
+    def getMenu(self, menuID, dishesName):
         """Display nutritional values of selected dishes, which then is fetched from brandItemSearch and display it
         using NutritionLabel class.
         Arguments:
@@ -478,6 +477,7 @@ class ShowRestaurantsWindow(tk.Toplevel):
                 else:
                     foodData = brandItemSearch(menuID[index], BASE_URL, HEADERS)
                 NutritionLabel(self, foodData)
+
 
 if __name__ == '__main__':
     app = MainWin()
