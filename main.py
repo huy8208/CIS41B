@@ -445,7 +445,8 @@ class ShowRestaurantsWindow(tk.Toplevel):
         tk.Label(self, text='Contact number: ' + restaurant['locations'][i]['phone']).grid(row=4, columnspan=2, sticky="nw")
 
         # Adding restaurants menus in listbox
-        tk.Label(self, text='Menu').grid(row=5, column=0,columnspan=2, sticky="n")
+        self.headline = tkf.Font(size=24, weight="bold")
+        tk.Label(self, text='Menu',font=self.headline).grid(row=5, column=0,columnspan=2, sticky="n")
         tk.Label(self, text="Please select up to 3 food items to view nutrition labels.").grid(row=6, column=0,padx=10, sticky="n")
         self.scroll = tk.Scrollbar(self)
         self.scroll.grid(row=7, column=1, sticky="nsw")             # Grids scrollbar in 2nd column next to listbox
