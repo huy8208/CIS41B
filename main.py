@@ -382,17 +382,18 @@ class ChoiceFour(tk.Toplevel):
 
         # List box with scroll bar.
         self.scroll = tk.Scrollbar(self)
-        self.LB = tk.Listbox(self, height=10, width=50, selectmode="multiple", yscrollcommand=self.scroll.set)
+        self.LB = tk.Listbox(self, height=10, width=50, selectmode="single", yscrollcommand=self.scroll.set)
         self.LB.grid(padx=10, row=0, column=0)
         self.scroll.grid(row=0, column=1, sticky="ns")
         tk.Button(self, text="Find nearby restaurants", command=self.insertToListBox).grid(row=1,column=0)
         self.scroll.config(command=self.LB.yview)      # Allows scrollbar to work with listbox y-scrolling
         # A list contains dictionaries of nearby restaurants.
         self.data = []
-
+        # Queue to store user's chosen restaurants data
+        self.queue = queue.Queue()
     def insertToListBox(self):
         """Insert all restaurant's names to the listbox"""
-        tk.Button(self, text="View restaurant(s) detail",command = self.checkValid).grid(row=2,column=0,sticky="ns")
+        tk.Button(self, text="View restaurant detail",command = self.checkValid).grid(row=2,column=0,sticky="ns")
         self.data = getNearbyRestaurants(BASE_URL, HEADERS)
         for restaurant in self.data['locations']:
             self.LB.insert(tk.END,restaurant['name'])
@@ -400,22 +401,35 @@ class ChoiceFour(tk.Toplevel):
     def checkValid(self):
         """Check if user select at most 3 choices, using processes to call ShowRestaurantsWindow to display
         multiple restaurants' information"""
-        if len(self.LB.curselection()) <= 0:
-            tkmb.showerror("Error", "Please click find my restaurants button first !")
-        elif len(self.LB.curselection()) > 3:
-            tkmb.showerror("Error", "Please choose less than 3 restaurants")
-        else:
-            curSelected = self.LB.curselection()
-            for index in curSelected:
-                ShowRestaurantsWindow(self,self.data,index)
+        curSelected = self.LB.curselection()
+        threads = []
+        menu = self.searchAPI(self.data,*curSelected)
+        resWindow = ShowRestaurantsWindow(self,self.data,*curSelected,list(menu.values()),list(menu.keys()))
 
+        for k,v in menu.items():
+            resWindow.LB.insert(tk.END,k)
+
+
+    def searchAPI(self, restaurantList,index):
+        """Input chosen restaurant to api genSearch to return food menu.
+
+        Arguments:
+            restaurantList: a dictionary of all nearby restaurants contained in a list.
+            index: chosen index number from listbox current selection from ChoiceFour window.
+        """
+        response = genSearch(restaurantList['locations'][index]['name'], BASE_URL, HEADERS)
+        return response
 
 class ShowRestaurantsWindow(tk.Toplevel):
-    def __init__(self, master, restaurant, i):
+    def __init__(self, master, restaurant, i,menuID,dishesName):
         """Initializes window to display restaurant's name, address, website and phone number.
 
         Arguments:
             master (MainWin class): links to MainWindow window
+            restaurant: a dictionary of all nearby restaurants contained in a list.
+            i : index of selected restaurant (listbox) from ChoiceFour
+            menuID: a list of all dishes ID of user's chosen restaurant.
+            dishesName: a list of all dishes name of user's chosen restaurant.
         """
         super().__init__(master)
         self.title("Restaurant(s) Information")
@@ -425,14 +439,44 @@ class ShowRestaurantsWindow(tk.Toplevel):
         tk.Label(self, text='Address: ' + restaurant['locations'][i]['address']).grid(row=2, columnspan=2, sticky="nw")
         tk.Label(self, text='Website: ' + restaurant['locations'][i]['website']).grid(row=3, columnspan=2, sticky="nw")
 
+        # Fixing phone number displaying blank.
         for res in restaurant['locations']:
             if not res['phone']:
                 res['phone'] = 'unavailable'
         tk.Label(self, text='Contact number: ' + restaurant['locations'][i]['phone']).grid(row=4, columnspan=2, sticky="nw")
 
+        # Adding restaurants menus in listbox
+        tk.Label(self, text='Menu').grid(row=5, columnspan=2, sticky="n")
+        self.scroll = tk.Scrollbar(self)
+        self.scroll.grid(row=6, column=1, sticky="nsw")             # Grids scrollbar in 2nd column next to listbox
+        self.LB = tk.Listbox(self, height=15, width=50, selectmode="multiple", yscrollcommand=self.scroll.set)
+        self.LB.grid(row=6, padx=5, pady=10)
+        self.scroll.config(command=self.LB.yview)
+
+
+        tk.Button(self, text="Get menu",command = lambda : self.getMenu(menuID,dishesName)).grid(row=7,column=0,sticky="ns")
+
         self.resizable = (False, False)
         self.grab_set()
 
+    def getMenu(self,menuID,dishesName):
+        """Display nutritional values of selected dishes, which then is fetched from brandItemSearch and display it
+        using NutritionLabel class.
+        Arguments:
+            menuID: a list of all food item IDs.
+        """
+        selectedMenu = self.LB.curselection()
+        if selectedMenu is ():
+            tkmb.showerror("Error", "Please select at least one food item.")
+        elif not 0 < len(selectedMenu) <= 3:
+            tkmb.showerror("Error", "Please choose up to 3 food items.")
+        else:
+            for index in selectedMenu:
+                if menuID[index] is None:  # Checks if food item is a common item
+                    foodData = commonItemSearch(dishesName[index].replace("(Common)", ""), BASE_URL, HEADERS)
+                else:
+                    foodData = brandItemSearch(menuID[index], BASE_URL, HEADERS)
+                NutritionLabel(self, foodData)
 
 if __name__ == '__main__':
     app = MainWin()
