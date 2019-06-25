@@ -54,7 +54,7 @@ class MainWin(tk.Tk):
         tk.Button(self, text="Search and display food label", command=lambda: ChoiceOne(self)).grid(padx=10, pady=10)
         tk.Button(self, text="Calculate total calorie count for foods", command=lambda: ChoiceTwo(self)).grid(padx=10, pady=10)
         tk.Button(self, text="Display calorie count graph of food", command=lambda: ChoiceThree(self)).grid(padx=10, pady=10)
-        tk.Button(self, text="Show nearby restaurants", command=lambda: ChoiceFour(self)).grid(padx=10, pady=10)
+        tk.Button(self, text="Show nearby restaurants based on current location", command=lambda: ChoiceFour(self)).grid(padx=10, pady=10)
 
         self.protocol("WM_DELETE_WINDOW", self.closeWin)
 
@@ -381,19 +381,18 @@ class ChoiceFour(tk.Toplevel):
         self.resizable(False, False)
 
         # List box with scroll bar.
+        tk.Label(self, text="Please click Find nearby restaurant button to view nearby restaurants.\n After select one restaurant, please click View restaurant detail button to get menu.").grid(row=0, column=0,padx=10, sticky="n")
         self.scroll = tk.Scrollbar(self)
         self.LB = tk.Listbox(self, height=10, width=50, selectmode="single", yscrollcommand=self.scroll.set)
-        self.LB.grid(padx=10, row=0, column=0)
-        self.scroll.grid(row=0, column=1, sticky="ns")
-        tk.Button(self, text="Find nearby restaurants", command=self.insertToListBox).grid(row=1,column=0)
+        self.LB.grid(padx=10, row=1, column=0)
+        self.scroll.grid(row=1, column=1, sticky="ns")
+        tk.Button(self, text="Find nearby restaurants", command=self.insertToListBox).grid(row=2,column=0)
         self.scroll.config(command=self.LB.yview)      # Allows scrollbar to work with listbox y-scrolling
         # A list contains dictionaries of nearby restaurants.
         self.data = []
-        # Queue to store user's chosen restaurants data
-        self.queue = queue.Queue()
     def insertToListBox(self):
         """Insert all restaurant's names to the listbox"""
-        tk.Button(self, text="View restaurant detail",command = self.checkValid).grid(row=2,column=0,sticky="ns")
+        tk.Button(self, text="View restaurant detail",command = self.checkValid).grid(row=3,column=0,sticky="ns")
         self.data = getNearbyRestaurants(BASE_URL, HEADERS)
         for restaurant in self.data['locations']:
             self.LB.insert(tk.END,restaurant['name'])
@@ -446,15 +445,16 @@ class ShowRestaurantsWindow(tk.Toplevel):
         tk.Label(self, text='Contact number: ' + restaurant['locations'][i]['phone']).grid(row=4, columnspan=2, sticky="nw")
 
         # Adding restaurants menus in listbox
-        tk.Label(self, text='Menu').grid(row=5, columnspan=2, sticky="n")
+        tk.Label(self, text='Menu').grid(row=5, column=0,columnspan=2, sticky="n")
+        tk.Label(self, text="Please select up to 3 food items to view nutrition labels.").grid(row=6, column=0,padx=10, sticky="n")
         self.scroll = tk.Scrollbar(self)
-        self.scroll.grid(row=6, column=1, sticky="nsw")             # Grids scrollbar in 2nd column next to listbox
+        self.scroll.grid(row=7, column=1, sticky="nsw")             # Grids scrollbar in 2nd column next to listbox
         self.LB = tk.Listbox(self, height=15, width=50, selectmode="multiple", yscrollcommand=self.scroll.set)
-        self.LB.grid(row=6, padx=5, pady=10)
+        self.LB.grid(row=7, padx=5, pady=10)
         self.scroll.config(command=self.LB.yview)
 
 
-        tk.Button(self, text="Get menu",command = lambda : self.getMenu(menuID,dishesName)).grid(row=7,column=0,sticky="ns")
+        tk.Button(self, text="Print nutritional label for selected food items",command = lambda : self.getMenu(menuID,dishesName)).grid(row=8,column=0,sticky="ns")
 
         self.resizable = (False, False)
         self.grab_set()
