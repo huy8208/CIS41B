@@ -1,6 +1,6 @@
 "Foodie" - CIS 41B Final Project
 Instructor Clare Nguyen
-June 23, 2019
+June 24, 2019
 Team Members: Duc Huy Nguyen, Minhduc Cao
 
 // What does it do?
